@@ -12,13 +12,15 @@
     "windows": [
       {
         "title": "DevSprite",
-        "width": 320,
-        "height": 480,
+        "width": 220,
+        "height": 580,
         "resizable": false,
         "decorations": false,
         "transparent": true,
+        "shadow": false,
         "alwaysOnTop": true,
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "additionalBrowserArgs": "--disable-background-coloring --disable-renderer-backgrounding"
       }
     ],
     "security": {
