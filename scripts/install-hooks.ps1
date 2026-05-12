@@ -1,6 +1,8 @@
 # DevSprite Claude Code Hook Installer for Windows
 
 $settingsPath = "$env:USERPROFILE\.claude\settings.json"
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$bridgePath = Join-Path $scriptPath "devsprite-bridge.cmd"
 
 # Backup existing settings
 if (Test-Path $settingsPath) {
@@ -26,7 +28,7 @@ $settings.hooks.PostToolUse = @(
         hooks = @(
             @{
                 type = "command"
-                command = "devsprite-bridge send tool_call"
+                command = "$bridgePath tool_call --data `"$TOOL_INPUT`""
             }
         )
     }
@@ -38,7 +40,7 @@ $settings.hooks.Notification = @(
         hooks = @(
             @{
                 type = "command"
-                command = "devsprite-bridge send notification"
+                command = "$bridgePath notification --data `"$MESSAGE`""
             }
         )
     }
@@ -47,3 +49,4 @@ $settings.hooks.Notification = @(
 # Save settings
 $settings | ConvertTo-Json -Depth 10 | Set-Content $settingsPath
 Write-Host "Claude Code hooks installed successfully!"
+Write-Host "Bridge path: $bridgePath"
