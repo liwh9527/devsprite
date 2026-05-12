@@ -1,10 +1,12 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import { Mascot } from "./Mascot";
 import { StatusCard } from "./StatusCard";
 import { ToolList } from "./ToolList";
 import { PermissionDialog } from "./PermissionDialog";
 import { useAppStore } from "../stores/appStore";
 import { useTauriEvent } from "../hooks/useTauriEvent";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { LogicalPosition } from "@tauri-apps/api/dpi";
 
 export const Widget: React.FC = () => {
   useTauriEvent();
@@ -18,6 +20,8 @@ export const Widget: React.FC = () => {
   } = useAppStore();
 
   const currentPermission = permissionRequests[0];
+  const isDragging = useRef(false);
+  const startPos = useRef({ x: 0, y: 0 });
 
   const handleApprove = (id: string) => {
     removePermissionRequest(id);
@@ -27,25 +31,34 @@ export const Widget: React.FC = () => {
     removePermissionRequest(id);
   };
 
-  const handleDrag = useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
 
-    const startX = e.clientX;
-    const startY = e.clientY;
+    isDragging.current = true;
+    startPos.current = { x: e.clientX, y: e.clientY };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
+    const handleMouseMove = async (e: MouseEvent) => {
+      if (!isDragging.current) return;
 
-      // @ts-ignore - Tauri API
-      window.__TAURI__?.window.appWindow.setPosition({
-        x: deltaX,
-        y: deltaY,
-      });
+      const deltaX = e.clientX - startPos.current.x;
+      const deltaY = e.clientY - startPos.current.y;
+
+      try {
+        const window = getCurrentWindow();
+        const pos = await window.outerPosition();
+        await window.setPosition(
+          new LogicalPosition(pos.x + deltaX, pos.y + deltaY)
+        );
+      } catch (err) {
+        console.error("Failed to move window:", err);
+      }
+
+      startPos.current = { x: e.clientX, y: e.clientY };
     };
 
     const handleMouseUp = () => {
+      isDragging.current = false;
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
@@ -57,7 +70,7 @@ export const Widget: React.FC = () => {
   return (
     <div
       className="glass-effect rounded-widget shadow-2xl overflow-hidden cursor-move"
-      onMouseDown={handleDrag}
+      onMouseDown={handleMouseDown}
     >
       <div className="bg-gradient-to-r from-primary to-primary-dark p-4 text-center">
         <h1 className="text-white font-bold text-lg">DevSprite</h1>
