@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #667eea;
+  --color-primary-dark: #764ba2;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background: transparent;
+  overflow: hidden;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}

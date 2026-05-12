@@ -1,0 +1,45 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "target": "target/release/devsprite"
+  },
+  "package": {
+    "productName": "DevSprite",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "window": {
+        "all": false,
+        "setAlwaysOnTop": true,
+        "setPosition": true,
+        "setSize": true,
+        "hide": true,
+        "show": true
+      }
+    },
+    "windows": [
+      {
+        "title": "DevSprite",
+        "width": 320,
+        "height": 480,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
+      }
+    ],
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
+  }
+}
