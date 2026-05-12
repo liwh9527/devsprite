@@ -4,6 +4,8 @@ pub mod ipc;
 pub mod tray;
 
 use tauri::Emitter;
+use tauri::Manager;
+use tauri::utils::config::Color;
 
 pub fn run() {
     let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(32);
@@ -12,6 +14,10 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .setup(move |app| {
             tray::create_tray(app)?;
+
+            // Set webview background to transparent for desktop pet effect
+            let window = app.get_webview_window("main").unwrap();
+            window.set_background_color(Some(Color(0, 0, 0, 0))).ok();
 
             let pipe_name = "devsprite";
             let listener = ipc::named_pipe::NamedPipeListener::new(pipe_name);
