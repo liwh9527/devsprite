@@ -1,4 +1,4 @@
-use std::io::{self, BufRead, BufReader};
+use std::io;
 use tokio::sync::mpsc;
 
 pub struct NamedPipeListener {

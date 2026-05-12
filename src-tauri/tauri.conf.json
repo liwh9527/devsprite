@@ -1,30 +1,14 @@
 {
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
+  "productName": "DevSprite",
+  "version": "0.1.0",
+  "identifier": "com.devsprite.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devUrl": "http://localhost:1420",
-    "target": "target/release/devsprite"
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "DevSprite",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "window": {
-        "all": false,
-        "setAlwaysOnTop": true,
-        "setPosition": true,
-        "setSize": true,
-        "hide": true,
-        "show": true
-      }
-    },
+  "app": {
     "windows": [
       {
         "title": "DevSprite",
@@ -37,9 +21,15 @@
         "skipTaskbar": true
       }
     ],
-    "systemTray": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": true
+    "security": {
+      "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ]
   }
 }

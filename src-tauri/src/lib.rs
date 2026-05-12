@@ -4,6 +4,7 @@ pub mod ipc;
 pub mod tray;
 
 use tokio::sync::mpsc;
+use tauri::Emitter;
 
 pub fn run() {
     let (tx, mut rx) = mpsc::channel::<String>(32);
@@ -26,7 +27,7 @@ pub fn run() {
             tokio::spawn(async move {
                 while let Some(msg) = rx.recv().await {
                     if let Ok(event) = ipc::events::DevSpriteEvent::parse(&msg) {
-                        handle.emit_all("devsprite-event", event).ok();
+                        handle.emit("devsprite-event", event).ok();
                     }
                 }
             });
