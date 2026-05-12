@@ -37,6 +37,8 @@ impl NamedPipeListener {
             .collect();
         let pcwstr = PCWSTR::from_raw(pipe_name_wide.as_ptr());
 
+        log::info!("Named Pipe listener starting on: {}", pipe_name);
+
         loop {
             unsafe {
                 let handle = CreateNamedPipeW(
@@ -51,14 +53,21 @@ impl NamedPipeListener {
                 );
 
                 if handle.is_invalid() {
-                    return Err(io::Error::last_os_error());
+                    let err = io::Error::last_os_error();
+                    log::error!("Failed to create pipe: {}", err);
+                    return Err(err);
                 }
 
+                log::info!("Pipe created, waiting for connection...");
+
                 if ConnectNamedPipe(handle, None).is_err() {
+                    log::warn!("ConnectNamedPipe failed, disconnecting");
                     DisconnectNamedPipe(handle).ok();
                     CloseHandle(handle).ok();
                     continue;
                 }
+
+                log::info!("Client connected, reading data...");
 
                 let mut buffer = [0u8; 4096];
                 let mut bytes_read = 0u32;
@@ -76,6 +85,7 @@ impl NamedPipeListener {
                         Ok(()) => {
                             let msg =
                                 String::from_utf8_lossy(&buffer[..bytes_read as usize]);
+                            log::info!("Received: {}", &msg[..msg.len().min(100)]);
                             if tx.blocking_send(msg.to_string()).is_err() {
                                 break;
                             }
@@ -84,6 +94,7 @@ impl NamedPipeListener {
                     }
                 }
 
+                log::info!("Client disconnected");
                 DisconnectNamedPipe(handle).ok();
                 CloseHandle(handle).ok();
             }

@@ -15,16 +15,13 @@ pub fn run() {
         .setup(move |app| {
             tray::create_tray(app)?;
 
-            // Set webview background to transparent for desktop pet effect
-            let window = app.get_webview_window("main").unwrap();
-            window.set_background_color(Some(Color(0, 0, 0, 0))).ok();
-
             let pipe_name = "devsprite";
             let listener = ipc::named_pipe::NamedPipeListener::new(pipe_name);
 
             tauri::async_runtime::spawn(async move {
+                log::info!("Starting Named Pipe listener...");
                 if let Err(e) = listener.start_listening(tx).await {
-                    eprintln!("Named Pipe error: {}", e);
+                    log::error!("Named Pipe error: {}", e);
                 }
             });
 

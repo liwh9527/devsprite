@@ -19,7 +19,7 @@
 html,
 body,
 #root {
-  background: transparent;
+  background: white;
   overflow: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
