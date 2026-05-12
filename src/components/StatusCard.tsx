@@ -21,17 +21,19 @@ export const StatusCard: React.FC<StatusCardProps> = ({ status, message }) => {
   const config = statusConfig[status];
 
   return (
-    <div className="px-4 py-3">
+    <div className="px-3 py-2">
       <div className="flex items-center gap-2">
         <div
-          className={`w-3 h-3 rounded-full ${config.color} animate-pulse-slow`}
+          className={`w-2 h-2 rounded-full ${config.color} animate-pulse-slow`}
         />
-        <span className="font-semibold text-gray-800">
+        <span className="font-medium text-gray-800 text-xs">
           {config.label}...
         </span>
       </div>
       {message && (
-        <p className="text-sm text-gray-500 mt-1 ml-5">{message}</p>
+        <p className="text-[10px] text-gray-500 mt-1 ml-4 truncate">
+          {message}
+        </p>
       )}
     </div>
   );

@@ -16,15 +16,69 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  background: transparent;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  background: transparent;
-  overflow: hidden;
+  user-select: none;
 }
 
-.glass-effect {
+/* Desktop pet layout */
+.pet-container {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The pet mascot - always visible */
+.pet-body {
+  cursor: move;
+  position: relative;
+  z-index: 10;
+  order: 1;
+}
+
+/* The info panel - hidden by default, shown on hover */
+.pet-panel {
+  order: 0;
+  width: 200px;
+  margin-bottom: 8px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* Show panel on hover */
+.pet-container:hover .pet-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
 }

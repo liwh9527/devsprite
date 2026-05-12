@@ -13,31 +13,26 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({
   onReject,
 }) => {
   return (
-    <div className="px-4 py-3">
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-        <p className="text-sm font-medium text-yellow-800 mb-2">
+    <div className="px-3 py-2">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+        <p className="text-[10px] font-medium text-yellow-800 mb-1">
           权限请求
         </p>
-        <p className="text-xs text-yellow-600 mb-3">
+        <p className="text-[9px] text-yellow-600 mb-2 truncate">
           {request.operation}: {request.target}
         </p>
-        {request.reason && (
-          <p className="text-xs text-yellow-500 mb-3">
-            原因: {request.reason}
-          </p>
-        )}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <button
             onClick={() => onApprove(request.id)}
-            className="flex-1 bg-green-500 text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+            className="flex-1 bg-green-500 text-white text-[10px] font-semibold py-1 px-2 rounded hover:bg-green-600 transition-colors"
           >
-            ✓ 批准
+            批准
           </button>
           <button
             onClick={() => onReject(request.id)}
-            className="flex-1 bg-white text-red-500 text-sm font-semibold py-2 px-4 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+            className="flex-1 bg-white text-red-500 text-[10px] font-semibold py-1 px-2 rounded border border-red-200 hover:bg-red-50 transition-colors"
           >
-            ✗ 拒绝
+            拒绝
           </button>
         </div>
       </div>

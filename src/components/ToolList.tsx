@@ -16,39 +16,37 @@ const toolIcons: Record<string, string> = {
 
 function formatTime(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
-  return `${minutes}m ago`;
+  return `${minutes}m`;
 }
 
 export const ToolList: React.FC<ToolListProps> = ({ toolCalls }) => {
   if (toolCalls.length === 0) {
     return (
-      <div className="px-4 py-3">
-        <div className="bg-gray-50 rounded-xl p-3">
-          <p className="text-xs text-gray-400 text-center">
-            暂无工具调用记录
-          </p>
-        </div>
+      <div className="px-3 py-2">
+        <p className="text-[10px] text-gray-400 text-center">
+          暂无工具调用记录
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-2">
-      <div className="space-y-1">
-        {toolCalls.map((call) => (
+    <div className="px-3 py-1">
+      <div className="space-y-0.5">
+        {toolCalls.slice(0, 5).map((call) => (
           <div
             key={call.id}
-            className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
           >
-            <span className="text-sm">
+            <span className="text-xs">
               {toolIcons[call.toolName] || "🔧"}
             </span>
-            <span className="text-sm font-medium text-gray-700 flex-1 truncate">
-              {call.toolName}: {call.target.split("/").pop()}
+            <span className="text-[10px] font-medium text-gray-700 flex-1 truncate">
+              {call.toolName}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-[9px] text-gray-400">
               {formatTime(call.timestamp)}
             </span>
           </div>

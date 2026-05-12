@@ -29,11 +29,12 @@ const mascotAnimations: Record<SpriteStatus, string> = {
 
 export const Mascot: React.FC<MascotProps> = ({ status }) => {
   return (
-    <div className="p-4 flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-50">
+    <div className="flex items-end justify-center">
       <img
         src={mascotImages[status]}
         alt="DevSprite mascot"
-        className={`w-40 h-40 object-contain ${mascotAnimations[status]}`}
+        className={`h-[340px] w-auto ${mascotAnimations[status]}`}
+        draggable={false}
       />
     </div>
   );
