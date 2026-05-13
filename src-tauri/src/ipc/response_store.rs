@@ -71,3 +71,117 @@ impl Default for ResponseStore {
         Self::new().expect("Failed to create ResponseStore")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    fn create_test_store() -> ResponseStore {
+        let temp_dir = env::temp_dir().join("devsprite_test_responses");
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let store_path = temp_dir.join("responses.json");
+
+        ResponseStore {
+            store_path,
+            pending_responses: Mutex::new(Vec::new()),
+        }
+    }
+
+    #[test]
+    fn test_store_response() {
+        let store = create_test_store();
+        let response = PermissionResponse {
+            request_id: "req1".to_string(),
+            approved: true,
+            timestamp: 1000,
+        };
+
+        store.store_response(response).unwrap();
+
+        let pending = store.get_pending_responses();
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].request_id, "req1");
+        assert_eq!(pending[0].approved, true);
+    }
+
+    #[test]
+    fn test_get_pending_responses() {
+        let store = create_test_store();
+        assert!(store.get_pending_responses().is_empty());
+
+        store.store_response(PermissionResponse {
+            request_id: "req1".to_string(),
+            approved: true,
+            timestamp: 1000,
+        }).unwrap();
+        store.store_response(PermissionResponse {
+            request_id: "req2".to_string(),
+            approved: false,
+            timestamp: 2000,
+        }).unwrap();
+
+        let pending = store.get_pending_responses();
+        assert_eq!(pending.len(), 2);
+    }
+
+    #[test]
+    fn test_clear_response() {
+        let store = create_test_store();
+        store.store_response(PermissionResponse {
+            request_id: "req1".to_string(),
+            approved: true,
+            timestamp: 1000,
+        }).unwrap();
+        store.store_response(PermissionResponse {
+            request_id: "req2".to_string(),
+            approved: false,
+            timestamp: 2000,
+        }).unwrap();
+
+        store.clear_response("req1").unwrap();
+
+        let pending = store.get_pending_responses();
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].request_id, "req2");
+    }
+
+    #[test]
+    fn test_load_from_disk() {
+        let store = create_test_store();
+        store.store_response(PermissionResponse {
+            request_id: "req1".to_string(),
+            approved: true,
+            timestamp: 1000,
+        }).unwrap();
+
+        // Create a new store pointing to the same path
+        let store2 = ResponseStore {
+            store_path: store.store_path.clone(),
+            pending_responses: Mutex::new(Vec::new()),
+        };
+
+        store2.load_from_disk().unwrap();
+        let pending = store2.get_pending_responses();
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].request_id, "req1");
+    }
+
+    #[test]
+    fn test_load_from_disk_empty_file() {
+        let temp_dir = env::temp_dir().join("devsprite_test_empty");
+        let _ = fs::create_dir_all(&temp_dir);
+        let store_path = temp_dir.join("responses.json");
+
+        let store = ResponseStore {
+            store_path,
+            pending_responses: Mutex::new(Vec::new()),
+        };
+
+        // File doesn't exist - should succeed with empty state
+        store.load_from_disk().unwrap();
+        assert!(store.get_pending_responses().is_empty());
+    }
+}
+
