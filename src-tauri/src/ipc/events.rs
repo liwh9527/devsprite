@@ -78,4 +78,77 @@ mod tests {
         let result = DevSpriteEvent::parse(json);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_parse_missing_required_field() {
+        let json = r#"{"timestamp": "2026-05-12T10:30:00Z"}"#;
+        let result = DevSpriteEvent::parse(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_tool_call_type_mismatch() {
+        let json = r#"{
+            "event": "tool_call",
+            "timestamp": "2026-05-12T10:30:00Z",
+            "session_id": "abc123",
+            "data": {
+                "status": "idle",
+                "message": "wrong data type"
+            }
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        let result = event.parse_tool_call();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_permission_request() {
+        let json = r#"{
+            "event": "permission_request",
+            "timestamp": "2026-05-12T10:30:00Z",
+            "session_id": "sess1",
+            "data": {
+                "operation": "Read",
+                "target": "/secret/file",
+                "reason": "needs access"
+            }
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        assert_eq!(event.event, "permission_request");
+        let perm = event.parse_permission_request().unwrap();
+        assert_eq!(perm.operation, "Read");
+        assert_eq!(perm.target, "/secret/file");
+        assert_eq!(perm.reason, "needs access");
+    }
+
+    #[test]
+    fn test_parse_session_start_minimal() {
+        let json = r#"{
+            "event": "session_start",
+            "timestamp": "2026-05-12T10:30:00Z",
+            "session_id": "sess-minimal",
+            "data": {}
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        assert_eq!(event.event, "session_start");
+        assert_eq!(event.session_id, "sess-minimal");
+    }
+
+    #[test]
+    fn test_parse_status_change() {
+        let json = r#"{
+            "event": "status_change",
+            "timestamp": "2026-05-12T10:30:00Z",
+            "session_id": "sess1",
+            "data": {
+                "status": "error",
+                "message": "connection lost"
+            }
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        let status = event.parse_status_change().unwrap();
+        assert_eq!(status.status, "error");
+        assert_eq!(status.message, "connection lost");
+    }
 }
