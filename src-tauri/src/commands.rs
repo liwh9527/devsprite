@@ -70,3 +70,27 @@ pub fn set_window_position(
     state.window_x = x;
     state.window_y = y;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_app_state_default() {
+        let state = AppState::default();
+        assert_eq!(state.status, "idle");
+        assert_eq!(state.is_visible, true);
+        assert_eq!(state.window_x, 100);
+        assert_eq!(state.window_y, 100);
+    }
+
+    #[test]
+    fn test_toggle_widget() {
+        let mut state = AppState::default();
+        assert!(state.is_visible);
+        state.is_visible = !state.is_visible;
+        assert!(!state.is_visible);
+        state.is_visible = !state.is_visible;
+        assert!(state.is_visible);
+    }
+}
