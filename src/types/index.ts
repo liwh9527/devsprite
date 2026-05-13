@@ -16,6 +16,12 @@ export interface PermissionRequest {
   timestamp: number;
 }
 
+export interface PermissionResponse {
+  requestId: string;
+  approved: boolean;
+  timestamp: number;
+}
+
 export interface DevSpriteEvent {
   event:
     | "session_start"
@@ -54,4 +60,5 @@ export interface AppState {
   toolCalls: ToolCall[];
   permissionRequests: PermissionRequest[];
   isWidgetVisible: boolean;
+  pendingResponses: PermissionResponse[];
 }

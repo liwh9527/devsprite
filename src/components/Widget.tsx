@@ -15,18 +15,9 @@ export const Widget: React.FC = () => {
     statusMessage,
     toolCalls,
     permissionRequests,
-    removePermissionRequest,
   } = useAppStore();
 
   const currentPermission = permissionRequests[0];
-
-  const handleApprove = (id: string) => {
-    removePermissionRequest(id);
-  };
-
-  const handleReject = (id: string) => {
-    removePermissionRequest(id);
-  };
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -52,11 +43,7 @@ export const Widget: React.FC = () => {
         <ToolList toolCalls={toolCalls} />
 
         {currentPermission && (
-          <PermissionDialog
-            request={currentPermission}
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
+          <PermissionDialog request={currentPermission} />
         )}
       </div>
     </div>
