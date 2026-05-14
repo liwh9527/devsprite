@@ -62,3 +62,40 @@ export interface AppState {
   isWidgetVisible: boolean;
   pendingResponses: PermissionResponse[];
 }
+
+export interface WindowSettings {
+  x: number;
+  y: number;
+  visible: boolean;
+  width: number;
+  height: number;
+}
+
+export interface PipeSettings {
+  name: string;
+  buffer_size: number;
+  connect_timeout: number;
+  max_retries: number;
+}
+
+export interface ThemeSettings {
+  primary_color: string;
+  primary_dark_color: string;
+  panel_width: number;
+  panel_background_opacity: number;
+  panel_border_radius: number;
+}
+
+export interface BehaviorSettings {
+  max_tool_calls: number;
+  permission_timeout: number;
+  mascot_path: string | null;
+  hotkey: string;
+}
+
+export interface Settings {
+  window: WindowSettings;
+  pipe: PipeSettings;
+  theme: ThemeSettings;
+  behavior: BehaviorSettings;
+}

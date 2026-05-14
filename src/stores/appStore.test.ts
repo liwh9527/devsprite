@@ -22,6 +22,18 @@ describe("useAppStore", () => {
       permissionRequests: [],
       isWidgetVisible: true,
       pendingResponses: [],
+      settings: {
+        window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+        pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+        theme: {
+          primary_color: "#667eea",
+          primary_dark_color: "#764ba2",
+          panel_width: 200,
+          panel_background_opacity: 0.95,
+          panel_border_radius: 12,
+        },
+        behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+      },
     });
     vi.clearAllMocks();
   });
@@ -161,5 +173,147 @@ describe("useAppStore", () => {
     expect(useAppStore.getState().isWidgetVisible).toBe(false);
     useAppStore.getState().toggleWidget();
     expect(useAppStore.getState().isWidgetVisible).toBe(true);
+  });
+
+  it("should load settings", async () => {
+    const mockSettings = {
+      window: { x: 200, y: 200, visible: true, width: 220, height: 580 },
+      pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+      theme: {
+        primary_color: "#ff0000",
+        primary_dark_color: "#764ba2",
+        panel_width: 200,
+        panel_background_opacity: 0.95,
+        panel_border_radius: 12,
+      },
+      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+    };
+    mockInvoke.mockResolvedValue(mockSettings);
+
+    const setPropertySpy = vi.spyOn(
+      document.documentElement.style,
+      "setProperty"
+    ).mockImplementation(() => {});
+
+    await useAppStore.getState().loadSettings();
+
+    expect(mockInvoke).toHaveBeenCalledWith("get_settings");
+    expect(useAppStore.getState().settings.theme.primary_color).toBe("#ff0000");
+    expect(setPropertySpy).toHaveBeenCalledWith("--color-primary", "#ff0000");
+    setPropertySpy.mockRestore();
+  });
+
+  it("should update settings", async () => {
+    const newSettings = {
+      window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+      pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+      theme: {
+        primary_color: "#00ff00",
+        primary_dark_color: "#764ba2",
+        panel_width: 250,
+        panel_background_opacity: 0.9,
+        panel_border_radius: 16,
+      },
+      behavior: { max_tool_calls: 8, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+    };
+    mockInvoke.mockResolvedValue(undefined);
+
+    const setPropertySpy = vi.spyOn(
+      document.documentElement.style,
+      "setProperty"
+    ).mockImplementation(() => {});
+
+    await useAppStore.getState().updateSettings(newSettings);
+
+    expect(mockInvoke).toHaveBeenCalledWith("update_settings", { settings: newSettings });
+    expect(useAppStore.getState().settings.behavior.max_tool_calls).toBe(8);
+    expect(setPropertySpy).toHaveBeenCalledWith("--color-primary", "#00ff00");
+    expect(setPropertySpy).toHaveBeenCalledWith("--panel-width", "250px");
+    setPropertySpy.mockRestore();
+  });
+
+  it("should apply theme to CSS variables", () => {
+    const setPropertySpy = vi.spyOn(
+      document.documentElement.style,
+      "setProperty"
+    ).mockImplementation(() => {});
+
+    useAppStore.getState().applyTheme({
+      primary_color: "#aabbcc",
+      primary_dark_color: "#ddeeff",
+      panel_width: 180,
+      panel_background_opacity: 0.8,
+      panel_border_radius: 8,
+    });
+
+    expect(setPropertySpy).toHaveBeenCalledWith("--color-primary", "#aabbcc");
+    expect(setPropertySpy).toHaveBeenCalledWith("--color-primary-dark", "#ddeeff");
+    expect(setPropertySpy).toHaveBeenCalledWith("--panel-width", "180px");
+    expect(setPropertySpy).toHaveBeenCalledWith("--panel-opacity", "0.8");
+    expect(setPropertySpy).toHaveBeenCalledWith("--panel-border-radius", "8px");
+    setPropertySpy.mockRestore();
+  });
+
+  it("should respect max_tool_calls from settings", () => {
+    useAppStore.setState({
+      settings: {
+        ...useAppStore.getState().settings,
+        behavior: { ...useAppStore.getState().settings.behavior, max_tool_calls: 8 },
+      },
+    });
+
+    for (let i = 0; i < 10; i++) {
+      useAppStore.getState().addToolCall({
+        id: String(i),
+        toolName: `Tool${i}`,
+        target: `/path/${i}`,
+        status: "completed",
+        timestamp: Date.now(),
+      });
+    }
+    expect(useAppStore.getState().toolCalls).toHaveLength(8);
+  });
+
+  it("should auto-deny permission request after timeout", async () => {
+    vi.useFakeTimers();
+    const { addPermissionRequest, startPermissionTimeout } = useAppStore.getState();
+
+    addPermissionRequest({
+      id: "perm-timeout-test",
+      operation: "Read",
+      target: "/file",
+      reason: "test",
+      timestamp: Date.now(),
+    });
+    startPermissionTimeout("perm-timeout-test");
+
+    expect(useAppStore.getState().permissionRequests).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(30000);
+
+    expect(useAppStore.getState().permissionRequests).toHaveLength(0);
+    vi.useRealTimers();
+  });
+
+  it("should cancel timeout when permission is manually responded", async () => {
+    vi.useFakeTimers();
+    const { addPermissionRequest, startPermissionTimeout } = useAppStore.getState();
+
+    addPermissionRequest({
+      id: "perm-cancel-test",
+      operation: "Write",
+      target: "/file",
+      reason: "test",
+      timestamp: Date.now(),
+    });
+    startPermissionTimeout("perm-cancel-test");
+
+    mockInvoke.mockResolvedValue(undefined);
+    await useAppStore.getState().respondToPermission("perm-cancel-test", true);
+
+    await vi.advanceTimersByTimeAsync(30000);
+
+    expect(useAppStore.getState().permissionRequests).toHaveLength(0);
+    vi.useRealTimers();
   });
 });

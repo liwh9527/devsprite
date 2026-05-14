@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useAppStore } from "../stores/appStore";
 
 // Mock @tauri-apps/api/event
@@ -9,8 +9,9 @@ vi.mock("@tauri-apps/api/event", () => ({
 }));
 
 // Mock @tauri-apps/api/core
+const mockInvoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(),
+  invoke: (...args: any[]) => mockInvoke(...args),
 }));
 
 // Mock @tauri-apps/api/window
@@ -34,7 +35,8 @@ if (typeof crypto.randomUUID !== "function") {
 import { useTauriEvent } from "./useTauriEvent";
 
 describe("useTauriEvent", () => {
-  let listenCallback: (event: any) => void;
+  let devSpriteCallback: (event: any) => void;
+  let settingsCallback: (event: any) => void;
 
   beforeEach(() => {
     useAppStore.setState({
@@ -45,14 +47,72 @@ describe("useTauriEvent", () => {
       permissionRequests: [],
       isWidgetVisible: true,
       pendingResponses: [],
+      settings: {
+        window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+        pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+        theme: {
+          primary_color: "#667eea",
+          primary_dark_color: "#764ba2",
+          panel_width: 200,
+          panel_background_opacity: 0.95,
+          panel_border_radius: 12,
+        },
+        behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+      },
     });
 
+    // Default mock: return resolved promise for both listeners
     mockListen.mockImplementation(
       (eventName: string, callback: (event: any) => void) => {
-        listenCallback = callback;
+        if (eventName === "devsprite-event") {
+          devSpriteCallback = callback;
+        } else if (eventName === "settings-changed") {
+          settingsCallback = callback;
+        }
         return Promise.resolve(vi.fn());
       }
     );
+
+    // Default mock for invoke (for loadSettings)
+    mockInvoke.mockResolvedValue({
+      window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+      pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+      theme: {
+        primary_color: "#667eea",
+        primary_dark_color: "#764ba2",
+        panel_width: 200,
+        panel_background_opacity: 0.95,
+        panel_border_radius: 12,
+      },
+      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+    });
+
+    vi.clearAllMocks();
+
+    // Re-setup after clearAllMocks
+    mockListen.mockImplementation(
+      (eventName: string, callback: (event: any) => void) => {
+        if (eventName === "devsprite-event") {
+          devSpriteCallback = callback;
+        } else if (eventName === "settings-changed") {
+          settingsCallback = callback;
+        }
+        return Promise.resolve(vi.fn());
+      }
+    );
+
+    mockInvoke.mockResolvedValue({
+      window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+      pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+      theme: {
+        primary_color: "#667eea",
+        primary_dark_color: "#764ba2",
+        panel_width: 200,
+        panel_background_opacity: 0.95,
+        panel_border_radius: 12,
+      },
+      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+    });
   });
 
   it("should listen to devsprite-event", () => {
@@ -63,11 +123,19 @@ describe("useTauriEvent", () => {
     );
   });
 
+  it("should also listen to settings-changed", () => {
+    renderHook(() => useTauriEvent());
+    expect(mockListen).toHaveBeenCalledWith(
+      "settings-changed",
+      expect.any(Function)
+    );
+  });
+
   it("should set status to active on session_start", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
-      listenCallback({
+      devSpriteCallback({
         payload: {
           event: "session_start",
           session_id: "sess1",
@@ -84,7 +152,7 @@ describe("useTauriEvent", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
-      listenCallback({
+      devSpriteCallback({
         payload: {
           event: "session_end",
           session_id: "sess1",
@@ -100,7 +168,7 @@ describe("useTauriEvent", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
-      listenCallback({
+      devSpriteCallback({
         payload: {
           event: "tool_call",
           session_id: "sess1",
@@ -122,7 +190,7 @@ describe("useTauriEvent", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
-      listenCallback({
+      devSpriteCallback({
         payload: {
           event: "permission_request",
           session_id: "sess1",
@@ -143,7 +211,7 @@ describe("useTauriEvent", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
-      listenCallback({
+      devSpriteCallback({
         payload: {
           event: "status_change",
           session_id: "sess1",
@@ -163,7 +231,7 @@ describe("useTauriEvent", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
-      listenCallback({
+      devSpriteCallback({
         payload: {
           event: "ai_response",
           session_id: "sess1",
@@ -173,5 +241,33 @@ describe("useTauriEvent", () => {
     });
 
     expect(useAppStore.getState().status).toBe("active");
+  });
+
+  it("should reload settings on settings-changed event", async () => {
+    renderHook(() => useTauriEvent());
+
+    mockInvoke.mockResolvedValue({
+      window: { x: 200, y: 200, visible: true, width: 250, height: 580 },
+      pipe: { name: "newpipe", buffer_size: 8192, connect_timeout: 5000, max_retries: 3 },
+      theme: {
+        primary_color: "#ff0000",
+        primary_dark_color: "#00ff00",
+        panel_width: 250,
+        panel_background_opacity: 0.8,
+        panel_border_radius: 16,
+      },
+      behavior: { max_tool_calls: 8, permission_timeout: 45, mascot_path: "/new/path", hotkey: "Ctrl+Shift+D" },
+    });
+
+    const setPropertySpy = vi.spyOn(document.documentElement.style, "setProperty").mockImplementation(() => {});
+
+    settingsCallback({ payload: null });
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith("get_settings");
+    });
+    expect(useAppStore.getState().settings.pipe.name).toBe("newpipe");
+    expect(setPropertySpy).toHaveBeenCalledWith("--color-primary", "#ff0000");
+    setPropertySpy.mockRestore();
   });
 });

@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Mascot } from "./Mascot";
 
-// Mock image imports
 vi.mock("../assets/mascot/idle.png", () => ({ default: "/idle.png" }));
 vi.mock("../assets/mascot/active.png", () => ({ default: "/active.png" }));
 vi.mock("../assets/mascot/working.png", () => ({ default: "/working.png" }));
@@ -22,15 +21,33 @@ describe("Mascot", () => {
     expect(img.src).toContain("working.png");
   });
 
-  it("should apply bounce animation when status is waiting", () => {
-    render(<Mascot status="waiting" />);
+  it("should apply mascot-idle animation class when status is idle", () => {
+    render(<Mascot status="idle" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("animate-bounce");
+    expect(img.className).toContain("mascot-idle");
   });
 
-  it("should apply pulse animation when status is active", () => {
+  it("should apply mascot-active animation class when status is active", () => {
     render(<Mascot status="active" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("animate-pulse-slow");
+    expect(img.className).toContain("mascot-active");
+  });
+
+  it("should apply mascot-waiting animation class when status is waiting", () => {
+    render(<Mascot status="waiting" />);
+    const img = screen.getByAltText("DevSprite mascot");
+    expect(img.className).toContain("mascot-waiting");
+  });
+
+  it("should apply mascot-working animation class when status is working", () => {
+    render(<Mascot status="working" />);
+    const img = screen.getByAltText("DevSprite mascot");
+    expect(img.className).toContain("mascot-working");
+  });
+
+  it("should apply mascot-error animation class when status is error", () => {
+    render(<Mascot status="error" />);
+    const img = screen.getByAltText("DevSprite mascot");
+    expect(img.className).toContain("mascot-error");
   });
 });

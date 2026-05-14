@@ -19,21 +19,13 @@ const mascotImages: Record<SpriteStatus, string> = {
   error: errorImg,
 };
 
-const mascotAnimations: Record<SpriteStatus, string> = {
-  idle: "animate-bounce-slow",
-  active: "animate-pulse-slow",
-  working: "animate-spin-slow",
-  waiting: "animate-bounce",
-  error: "animate-shake",
-};
-
 export const Mascot: React.FC<MascotProps> = ({ status }) => {
   return (
     <div className="flex items-end justify-center">
       <img
         src={mascotImages[status]}
         alt="DevSprite mascot"
-        className={`h-[340px] w-auto ${mascotAnimations[status]}`}
+        className={`h-[340px] w-auto mascot-${status}`}
         draggable={false}
       />
     </div>

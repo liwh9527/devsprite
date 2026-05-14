@@ -32,6 +32,7 @@ pub struct PipeSettings {
     pub name: String,
     pub buffer_size: usize,
     pub connect_timeout: u32,
+    pub max_retries: u32,
 }
 
 impl Default for PipeSettings {
@@ -40,6 +41,7 @@ impl Default for PipeSettings {
             name: "devsprite".to_string(),
             buffer_size: 4096,
             connect_timeout: 3000,
+            max_retries: 3,
         }
     }
 }
@@ -70,6 +72,7 @@ pub struct BehaviorSettings {
     pub max_tool_calls: u32,
     pub permission_timeout: u32,
     pub mascot_path: Option<String>,
+    pub hotkey: String,
 }
 
 impl Default for BehaviorSettings {
@@ -78,6 +81,7 @@ impl Default for BehaviorSettings {
             max_tool_calls: 5,
             permission_timeout: 30,
             mascot_path: None,
+            hotkey: "Ctrl+Shift+D".to_string(),
         }
     }
 }
@@ -119,6 +123,8 @@ pub enum ValidationError {
     MaxToolCallsOutOfRange(u32),
     PermissionTimeoutOutOfRange(u32),
     BufferSizeOutOfRange(usize),
+    HotkeyEmpty,
+    MaxRetriesOutOfRange(u32),
 }
 
 impl std::fmt::Display for ValidationError {
@@ -144,7 +150,10 @@ impl std::fmt::Display for ValidationError {
             Self::BufferSizeOutOfRange(v) => {
                 write!(f, "Buffer size out of range (1024-65536): {}", v)
             }
-        }
+            Self::HotkeyEmpty => write!(f, "Hotkey cannot be empty"),
+            Self::MaxRetriesOutOfRange(v) => {
+                write!(f, "Max retries out of range (1-10): {}", v)
+            }
     }
 }
 
@@ -202,6 +211,14 @@ impl Settings {
             errors.push(ValidationError::BufferSizeOutOfRange(self.pipe.buffer_size));
         }
 
+        if self.behavior.hotkey.trim().is_empty() {
+            errors.push(ValidationError::HotkeyEmpty);
+        }
+
+        if !(1..=10).contains(&self.pipe.max_retries) {
+            errors.push(ValidationError::MaxRetriesOutOfRange(self.pipe.max_retries));
+        }
+
         if errors.is_empty() {
             Ok(())
         } else {
@@ -256,6 +273,45 @@ pub fn save_settings(settings: &Settings) -> std::io::Result<()> {
 
     log::info!("Saved settings: {:?}", settings);
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Legacy config migration
+// ---------------------------------------------------------------------------
+
+fn get_legacy_config_path() -> PathBuf {
+    let app_data = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(app_data).join("devsprite").join("config.json")
+}
+
+#[derive(Debug, Deserialize)]
+struct LegacyConfig {
+    window_x: i32,
+    window_y: i32,
+    is_visible: bool,
+}
+
+pub fn migrate_legacy_config() {
+    let legacy_path = get_legacy_config_path();
+    if !legacy_path.exists() {
+        return;
+    }
+
+    log::info!("Found legacy config.json, migrating...");
+
+    if let Ok(content) = fs::read_to_string(&legacy_path) {
+        if let Ok(legacy) = serde_json::from_str::<LegacyConfig>(&content) {
+            let mut settings = Settings::default();
+            settings.window.x = legacy.window_x;
+            settings.window.y = legacy.window_y;
+            settings.window.visible = legacy.is_visible;
+
+            if save_settings(&settings).is_ok() {
+                let _ = fs::remove_file(&legacy_path);
+                log::info!("Legacy config migrated and removed");
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -423,6 +479,7 @@ mod tests {
                 name: "custom-pipe".to_string(),
                 buffer_size: 8192,
                 connect_timeout: 5000,
+                max_retries: 3,
             },
             theme: ThemeSettings {
                 primary_color: "#ff0000".to_string(),
@@ -463,5 +520,57 @@ mod tests {
             deserialized.behavior.mascot_path,
             Some("/path/to/mascot".to_string())
         );
+    }
+
+    #[test]
+    fn test_migrate_legacy_config() {
+        let legacy_json = r#"{"window_x":250,"window_y":350,"is_visible":false}"#;
+
+        // Parse legacy config (mirrors migrate_legacy_config logic)
+        let legacy: LegacyConfig = serde_json::from_str(legacy_json).unwrap();
+        assert_eq!(legacy.window_x, 250);
+        assert_eq!(legacy.window_y, 350);
+        assert_eq!(legacy.is_visible, false);
+
+        // Verify it maps to new settings
+        let mut settings = Settings::default();
+        settings.window.x = legacy.window_x;
+        settings.window.y = legacy.window_y;
+        settings.window.visible = legacy.is_visible;
+        assert_eq!(settings.window.x, 250);
+        assert_eq!(settings.window.y, 350);
+        assert_eq!(settings.window.visible, false);
+    }
+
+    #[test]
+    fn test_default_hotkey() {
+        let settings = Settings::default();
+        assert_eq!(settings.behavior.hotkey, "Ctrl+Shift+D");
+    }
+
+    #[test]
+    fn test_validate_empty_hotkey() {
+        let mut settings = Settings::default();
+        settings.behavior.hotkey = "  ".to_string();
+        let result = settings.validate();
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors.contains(&ValidationError::HotkeyEmpty));
+    }
+
+    #[test]
+    fn test_default_max_retries() {
+        let settings = Settings::default();
+        assert_eq!(settings.pipe.max_retries, 3);
+    }
+
+    #[test]
+    fn test_validate_max_retries_out_of_range() {
+        let mut settings = Settings::default();
+        settings.pipe.max_retries = 0;
+        let result = settings.validate();
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors.contains(&ValidationError::MaxRetriesOutOfRange(0)));
     }
 }

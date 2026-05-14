@@ -15,6 +15,8 @@ export function useTauriEvent() {
     setSessionId,
     addToolCall,
     addPermissionRequest,
+    startPermissionTimeout,
+    loadSettings,
   } = useAppStore();
 
   useEffect(() => {
@@ -47,13 +49,15 @@ export function useTauriEvent() {
 
         case "permission_request": {
           const permData = data as unknown as PermissionRequestData;
+          const requestId = crypto.randomUUID();
           addPermissionRequest({
-            id: crypto.randomUUID(),
+            id: requestId,
             operation: permData.operation,
             target: permData.target,
             reason: permData.reason,
             timestamp: Date.now(),
           });
+          startPermissionTimeout(requestId);
           setStatus("waiting", "等待权限批准");
           break;
         }
@@ -73,5 +77,15 @@ export function useTauriEvent() {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [setStatus, setSessionId, addToolCall, addPermissionRequest]);
+  }, [setStatus, setSessionId, addToolCall, addPermissionRequest, startPermissionTimeout]);
+
+  useEffect(() => {
+    const unlisten = listen<null>("settings-changed", () => {
+      loadSettings();
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [loadSettings]);
 }

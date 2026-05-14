@@ -8,6 +8,9 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
+  --panel-width: 200px;
+  --panel-opacity: 0.95;
+  --panel-border-radius: 12px;
 }
 
 * {
@@ -59,12 +62,12 @@ body {
 /* The info panel - hidden by default, shown on hover */
 .pet-panel {
   order: 0;
-  width: 200px;
+  width: var(--panel-width);
   margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, var(--panel-opacity));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 12px;
+  border-radius: var(--panel-border-radius);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   opacity: 0;
   visibility: hidden;
@@ -81,4 +84,72 @@ body {
   visibility: visible;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+/* Mascot status animations */
+.mascot-idle {
+  animation: mascot-idle 2.5s ease-in-out infinite;
+}
+
+.mascot-active {
+  animation: mascot-active 1.5s ease-in-out infinite;
+}
+
+.mascot-working {
+  animation: mascot-working 1s ease-in-out infinite;
+}
+
+.mascot-waiting {
+  animation: mascot-waiting 2s ease-in-out infinite;
+}
+
+.mascot-error {
+  animation: mascot-error 0.5s ease-in-out infinite;
+}
+
+@keyframes mascot-idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.02); }
+}
+
+@keyframes mascot-active {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(2deg); }
+  75% { transform: translateY(-4px) rotate(-2deg); }
+}
+
+@keyframes mascot-working {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+@keyframes mascot-waiting {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(-3px); opacity: 0.85; }
+}
+
+@keyframes mascot-error {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Transition animations */
+.slide-in-from-right {
+  animation: slide-in-from-right 200ms ease-out;
+}
+
+.scale-in {
+  animation: scale-in 200ms ease-out;
+}
+
+@keyframes slide-in-from-right {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
