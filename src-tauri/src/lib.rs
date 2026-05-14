@@ -6,6 +6,7 @@ pub mod tray;
 
 use std::sync::Arc;
 use tauri::Emitter;
+use tauri::Manager;
 use ipc::ResponseStore;
 use commands::AppState;
 use tokio::sync::Mutex;
@@ -38,20 +39,19 @@ pub fn run() {
 
             // Register global shortcut
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
-            if let Ok(global_shortcut) = app.global_shortcut() {
-                let _ = global_shortcut.on_shortcut(&hotkey, move |app_handle, shortcut, event| {
-                    if event == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-                        if let Some(window) = app_handle.get_window("main") {
-                            if window.is_visible().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+            let global_shortcut = app.global_shortcut();
+            let _ = global_shortcut.on_shortcut(hotkey.as_str(), move |app_handle, shortcut, event| {
+                if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        if window.is_visible().unwrap_or(false) {
+                            let _ = window.hide();
+                        } else {
+                            let _ = window.show();
+                            let _ = window.set_focus();
                         }
                     }
-                });
-            }
+                }
+            });
 
             let listener = ipc::named_pipe::NamedPipeListener::with_buffer_size(&pipe_name, buffer_size).with_max_retries(max_retries);
 

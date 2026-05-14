@@ -74,7 +74,7 @@ pub fn respond_permission(
     store: tauri::State<'_, Arc<ResponseStore>>,
 ) -> Result<(), String> {
     let response = PermissionResponse {
-        request_id,
+        request_id: request_id.clone(),
         approved,
         timestamp: chrono::Utc::now().timestamp(),
     };

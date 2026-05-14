@@ -1,7 +1,7 @@
 use tauri::{
     App, Manager,
     menu::{Menu, MenuItem},
-    tray::{TrayIcon, TrayIconBuilder},
+    tray::TrayIconBuilder,
     image::Image,
 };
 
@@ -16,13 +16,17 @@ pub fn create_tray(app: &App) -> tauri::Result<()> {
 
     // Load tray icon
     let icon_bytes = include_bytes!("../icons/icon.png");
-    let icon = Image::from_bytes(icon_bytes)?;
+    let icon = image::load_from_memory(icon_bytes)
+        .expect("Failed to load icon")
+        .to_rgba8();
+    let (w, h) = icon.dimensions();
+    let icon = Image::new_owned(icon.into_raw(), w, h);
 
     // Build tray
     let _tray = TrayIconBuilder::new()
         .icon(icon)
         .menu(&menu)
-        .menu_on_left_click(true)
+        .show_menu_on_left_click(true)
         .on_menu_event(|app, event| {
             match event.id.as_ref() {
                 "show_hide" => {
@@ -46,7 +50,7 @@ pub fn create_tray(app: &App) -> tauri::Result<()> {
     Ok(())
 }
 
-pub fn update_tray_status(app: &App, status: &str) -> tauri::Result<()> {
+pub fn update_tray_status(_app: &App, status: &str) -> tauri::Result<()> {
     let status_label = match status {
         "idle" => "空闲",
         "active" => "活跃",

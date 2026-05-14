@@ -66,8 +66,7 @@ impl NamedPipeListener {
                     let mut pipe_handle;
 
                     loop {
-                        pipe_handle = unsafe {
-                            CreateNamedPipeW(
+                        pipe_handle = CreateNamedPipeW(
                                 pcwstr,
                                 PIPE_ACCESS_INBOUND,
                                 PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
@@ -76,8 +75,7 @@ impl NamedPipeListener {
                                 buffer_size as u32,
                                 0,
                                 None,
-                            )
-                        };
+                            );
 
                         if !pipe_handle.is_invalid() {
                             break;

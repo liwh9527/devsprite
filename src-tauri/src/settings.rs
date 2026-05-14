@@ -154,6 +154,7 @@ impl std::fmt::Display for ValidationError {
             Self::MaxRetriesOutOfRange(v) => {
                 write!(f, "Max retries out of range (1-10): {}", v)
             }
+        }
     }
 }
 
