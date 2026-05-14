@@ -40,13 +40,13 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls }) => {
             key={call.id}
             className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
           >
-            <span className="text-xs">
+            <span className="text-xs shrink-0">
               {toolIcons[call.toolName] || "🔧"}
             </span>
-            <span className="text-[10px] font-medium text-gray-700 flex-1 truncate">
+            <span className="text-xs font-medium text-gray-800 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
               {call.toolName}
             </span>
-            <span className="text-[9px] text-gray-400">
+            <span className="text-[10px] text-gray-500 shrink-0 ml-auto">
               {formatTime(call.timestamp)}
             </span>
           </div>
