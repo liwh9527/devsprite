@@ -5,9 +5,10 @@ import { useAppStore } from "../stores/appStore";
 interface PermissionDialogProps {
   request: PermissionRequest;
   timeout?: number;
+  queueLength?: number;
 }
 
-export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, timeout = 30 }) => {
+export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, timeout = 30, queueLength }) => {
   const { respondToPermission } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
   const [remaining, setRemaining] = useState(timeout);
@@ -86,6 +87,11 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
             {isLoading ? "处理中..." : "拒绝"}
           </button>
         </div>
+        {queueLength && queueLength > 1 && (
+          <p className="text-[9px] text-gray-400 text-center mt-1">
+            还有 {queueLength - 1} 个待处理
+          </p>
+        )}
       </div>
     </div>
   );

@@ -72,6 +72,7 @@ export const Widget: React.FC = () => {
           <PermissionDialog
             request={currentPermission}
             timeout={settings.behavior.permission_timeout}
+            queueLength={permissionRequests.length}
           />
         )}
 
