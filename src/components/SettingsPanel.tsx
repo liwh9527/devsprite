@@ -10,6 +10,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const { settings, updateSettings } = useAppStore();
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -38,9 +39,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
 
   const handleSave = async () => {
     setSaving(true);
-    await updateSettings(localSettings);
+    setError(null);
+    const result = await updateSettings(localSettings);
     setSaving(false);
-    onClose();
+    if (result.success) {
+      onClose();
+    } else {
+      setError(result.error || "保存失败");
+    }
   };
 
   const handleReset = () => {
@@ -209,6 +215,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         </div>
 
         {/* Footer */}
+        {error && (
+          <p className="text-[10px] text-red-500 px-4 pb-2">{error}</p>
+        )}
         <div className="flex items-center justify-end gap-2 px-4 py-3">
           <button
             onClick={handleReset}
