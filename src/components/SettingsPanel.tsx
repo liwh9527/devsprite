@@ -63,7 +63,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         panel_background_opacity: 0.95,
         panel_border_radius: 12,
       },
-      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+      behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
     };
     setLocalSettings(defaults);
   };

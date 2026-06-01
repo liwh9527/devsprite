@@ -11,8 +11,9 @@ import type {
 
 export function useTauriEvent() {
   const {
+    ensureSession,
+    setActiveSession,
     setStatus,
-    setSessionId,
     addToolCall,
     addPermissionRequest,
     startPermissionTimeout,
@@ -23,7 +24,9 @@ export function useTauriEvent() {
     const unlisten = listen<DevSpriteEvent>("devsprite-event", (event) => {
       const { event: eventType, session_id, data } = event.payload;
 
-      setSessionId(session_id);
+      // Ensure session exists and is active
+      ensureSession(session_id);
+      setActiveSession(session_id);
 
       switch (eventType) {
         case "session_start":
@@ -79,7 +82,7 @@ export function useTauriEvent() {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [setStatus, setSessionId, addToolCall, addPermissionRequest, startPermissionTimeout]);
+  }, [ensureSession, setActiveSession, setStatus, addToolCall, addPermissionRequest, startPermissionTimeout]);
 
   useEffect(() => {
     const unlisten = listen<null>("settings-changed", () => {

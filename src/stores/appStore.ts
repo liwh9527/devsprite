@@ -42,7 +42,6 @@ const findSessionForPermission = (
 };
 
 interface AppStore extends AppState {
-  isWidgetVisible: boolean;
   settings: Settings;
   ensureSession: (sessionId: string) => void;
   setActiveSession: (sessionId: string) => void;
@@ -53,20 +52,16 @@ interface AppStore extends AppState {
   addPermissionRequest: (request: PermissionRequest) => void;
   removePermissionRequest: (id: string) => void;
   respondToPermission: (requestId: string, approved: boolean) => Promise<void>;
-  setWidgetVisible: (visible: boolean) => void;
-  toggleWidget: () => void;
   loadSettings: () => Promise<void>;
   updateSettings: (settings: Settings) => Promise<{ success: boolean; error?: string }>;
   applyTheme: (theme: ThemeSettings) => void;
   startPermissionTimeout: (requestId: string) => void;
   cancelPermissionTimeout: (requestId: string) => void;
-  clearAllPermissionTimeouts: () => void;
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
   sessions: new Map(),
   activeSessionId: null,
-  isWidgetVisible: true,
   pendingResponses: [],
   settings: {
     window: { x: 100, y: 100, visible: true, width: 220, height: 580 },

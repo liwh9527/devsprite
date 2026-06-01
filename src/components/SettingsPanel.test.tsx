@@ -14,12 +14,8 @@ vi.mock("@tauri-apps/api/core", () => ({
 describe("SettingsPanel", () => {
   beforeEach(() => {
     useAppStore.setState({
-      status: "idle",
-      statusMessage: "",
-      sessionId: null,
-      toolCalls: [],
-      permissionRequests: [],
-      isWidgetVisible: true,
+      sessions: new Map(),
+      activeSessionId: null,
       pendingResponses: [],
       settings: {
         window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
@@ -31,7 +27,7 @@ describe("SettingsPanel", () => {
           panel_background_opacity: 0.95,
           panel_border_radius: 12,
         },
-        behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+        behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
       },
     });
     vi.clearAllMocks();

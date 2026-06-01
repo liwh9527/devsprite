@@ -34,31 +34,29 @@ if (typeof crypto.randomUUID !== "function") {
 
 import { useTauriEvent } from "./useTauriEvent";
 
+const defaultSettings = {
+  window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+  pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+  theme: {
+    primary_color: "#667eea",
+    primary_dark_color: "#764ba2",
+    panel_width: 200,
+    panel_background_opacity: 0.95,
+    panel_border_radius: 12,
+  },
+  behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
+};
+
 describe("useTauriEvent", () => {
   let devSpriteCallback: (event: any) => void;
   let settingsCallback: (event: any) => void;
 
   beforeEach(() => {
     useAppStore.setState({
-      status: "idle",
-      statusMessage: "",
-      sessionId: null,
-      toolCalls: [],
-      permissionRequests: [],
-      isWidgetVisible: true,
+      sessions: new Map(),
+      activeSessionId: null,
       pendingResponses: [],
-      settings: {
-        window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
-        pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
-        theme: {
-          primary_color: "#667eea",
-          primary_dark_color: "#764ba2",
-          panel_width: 200,
-          panel_background_opacity: 0.95,
-          panel_border_radius: 12,
-        },
-        behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
-      },
+      settings: defaultSettings,
     });
 
     // Default mock: return resolved promise for both listeners
@@ -74,18 +72,7 @@ describe("useTauriEvent", () => {
     );
 
     // Default mock for invoke (for loadSettings)
-    mockInvoke.mockResolvedValue({
-      window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
-      pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
-      theme: {
-        primary_color: "#667eea",
-        primary_dark_color: "#764ba2",
-        panel_width: 200,
-        panel_background_opacity: 0.95,
-        panel_border_radius: 12,
-      },
-      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
-    });
+    mockInvoke.mockResolvedValue(defaultSettings);
 
     vi.clearAllMocks();
 
@@ -101,18 +88,7 @@ describe("useTauriEvent", () => {
       }
     );
 
-    mockInvoke.mockResolvedValue({
-      window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
-      pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
-      theme: {
-        primary_color: "#667eea",
-        primary_dark_color: "#764ba2",
-        panel_width: 200,
-        panel_background_opacity: 0.95,
-        panel_border_radius: 12,
-      },
-      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
-    });
+    mockInvoke.mockResolvedValue(defaultSettings);
   });
 
   it("should listen to devsprite-event", () => {
@@ -131,7 +107,7 @@ describe("useTauriEvent", () => {
     );
   });
 
-  it("should set status to active on session_start", () => {
+  it("should create session and set status to active on session_start", () => {
     renderHook(() => useTauriEvent());
 
     act(() => {
@@ -144,12 +120,24 @@ describe("useTauriEvent", () => {
       });
     });
 
-    expect(useAppStore.getState().status).toBe("active");
-    expect(useAppStore.getState().sessionId).toBe("sess1");
+    const state = useAppStore.getState();
+    expect(state.activeSessionId).toBe("sess1");
+    expect(state.sessions.has("sess1")).toBe(true);
+    expect(state.sessions.get("sess1")!.status).toBe("active");
   });
 
   it("should set status to idle on session_end", () => {
     renderHook(() => useTauriEvent());
+
+    act(() => {
+      devSpriteCallback({
+        payload: {
+          event: "session_start",
+          session_id: "sess1",
+          data: {},
+        },
+      });
+    });
 
     act(() => {
       devSpriteCallback({
@@ -161,7 +149,7 @@ describe("useTauriEvent", () => {
       });
     });
 
-    expect(useAppStore.getState().status).toBe("idle");
+    expect(useAppStore.getState().sessions.get("sess1")!.status).toBe("idle");
   });
 
   it("should add tool call and set working on tool_call event", () => {
@@ -181,9 +169,10 @@ describe("useTauriEvent", () => {
       });
     });
 
-    expect(useAppStore.getState().status).toBe("working");
-    expect(useAppStore.getState().toolCalls).toHaveLength(1);
-    expect(useAppStore.getState().toolCalls[0].toolName).toBe("Read");
+    const state = useAppStore.getState();
+    expect(state.sessions.get("sess1")!.status).toBe("working");
+    expect(state.sessions.get("sess1")!.toolCalls).toHaveLength(1);
+    expect(state.sessions.get("sess1")!.toolCalls[0].toolName).toBe("Read");
   });
 
   it("should add permission request on permission_request event", () => {
@@ -203,8 +192,9 @@ describe("useTauriEvent", () => {
       });
     });
 
-    expect(useAppStore.getState().status).toBe("waiting");
-    expect(useAppStore.getState().permissionRequests).toHaveLength(1);
+    const state = useAppStore.getState();
+    expect(state.sessions.get("sess1")!.status).toBe("waiting");
+    expect(state.sessions.get("sess1")!.permissionRequests).toHaveLength(1);
   });
 
   it("should update status on status_change event", () => {
@@ -223,8 +213,9 @@ describe("useTauriEvent", () => {
       });
     });
 
-    expect(useAppStore.getState().status).toBe("error");
-    expect(useAppStore.getState().statusMessage).toBe("Something went wrong");
+    const session = useAppStore.getState().sessions.get("sess1")!;
+    expect(session.status).toBe("error");
+    expect(session.statusMessage).toBe("Something went wrong");
   });
 
   it("should set status to active on ai_response event", () => {
@@ -240,7 +231,7 @@ describe("useTauriEvent", () => {
       });
     });
 
-    expect(useAppStore.getState().status).toBe("active");
+    expect(useAppStore.getState().sessions.get("sess1")!.status).toBe("active");
   });
 
   it("should reload settings on settings-changed event", async () => {
@@ -256,7 +247,7 @@ describe("useTauriEvent", () => {
         panel_background_opacity: 0.8,
         panel_border_radius: 16,
       },
-      behavior: { max_tool_calls: 8, permission_timeout: 45, mascot_path: "/new/path", hotkey: "Ctrl+Shift+D" },
+      behavior: { max_tool_calls: 8, permission_timeout: 45, hotkey: "Ctrl+Shift+D" },
     });
 
     const setPropertySpy = vi.spyOn(document.documentElement.style, "setProperty").mockImplementation(() => {});

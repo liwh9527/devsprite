@@ -15,17 +15,23 @@ const mockRequest: PermissionRequest = {
   target: "/secret/file.rs",
   reason: "Needs read access",
   timestamp: Date.now(),
+  sessionId: "test-session",
 };
 
 describe("PermissionDialog", () => {
   beforeEach(() => {
-    useAppStore.setState({
+    const sessions = new Map();
+    sessions.set("test-session", {
+      sessionId: "test-session",
       status: "idle",
       statusMessage: "",
-      sessionId: null,
       toolCalls: [],
       permissionRequests: [mockRequest],
-      isWidgetVisible: true,
+      lastActive: Date.now(),
+    });
+    useAppStore.setState({
+      sessions,
+      activeSessionId: "test-session",
       pendingResponses: [],
     });
   });

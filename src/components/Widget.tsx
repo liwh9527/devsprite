@@ -4,7 +4,7 @@ import { StatusCard } from "./StatusCard";
 import { ToolList } from "./ToolList";
 import { PermissionDialog } from "./PermissionDialog";
 import { SettingsPanel } from "./SettingsPanel";
-import { useAppStore } from "../stores/appStore";
+import { useAppStore, getActiveSession } from "../stores/appStore";
 import { useTauriEvent } from "../hooks/useTauriEvent";
 import { useWindowPosition } from "../hooks/useWindowPosition";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -13,14 +13,12 @@ export const Widget: React.FC = () => {
   useTauriEvent();
   useWindowPosition();
 
-  const {
-    status,
-    statusMessage,
-    toolCalls,
-    permissionRequests,
-    settings,
-    loadSettings,
-  } = useAppStore();
+  const status = useAppStore((s) => getActiveSession(s)?.status ?? "idle");
+  const statusMessage = useAppStore((s) => getActiveSession(s)?.statusMessage ?? "");
+  const toolCalls = useAppStore((s) => getActiveSession(s)?.toolCalls ?? []);
+  const permissionRequests = useAppStore((s) => getActiveSession(s)?.permissionRequests ?? []);
+  const settings = useAppStore((s) => s.settings);
+  const loadSettings = useAppStore((s) => s.loadSettings);
 
   const [showSettings, setShowSettings] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
