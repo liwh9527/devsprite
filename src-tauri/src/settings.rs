@@ -493,6 +493,7 @@ mod tests {
                 max_tool_calls: 7,
                 permission_timeout: 45,
                 mascot_path: Some("/path/to/mascot".to_string()),
+                hotkey: "Ctrl+Shift+D".to_string(),
             },
         };
 

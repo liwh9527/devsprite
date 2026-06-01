@@ -1,3 +1,4 @@
+use std::sync::OnceLock;
 use tauri::{
     App, Manager,
     menu::{Menu, MenuItem},
@@ -5,11 +6,17 @@ use tauri::{
     image::Image,
 };
 
+/// Stored reference to the status menu item, updated by `update_tray_status`.
+static STATUS_ITEM: OnceLock<MenuItem<tauri::Wry>> = OnceLock::new();
+
 pub fn create_tray(app: &App) -> tauri::Result<()> {
     // Create menu items
     let show_hide = MenuItem::with_id(app, "show_hide", "显示/隐藏", true, None::<&str>)?;
     let status_item = MenuItem::with_id(app, "status", "状态: 空闲", false, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+
+    // Store a clone for later use by update_tray_status
+    let _ = STATUS_ITEM.set(status_item.clone());
 
     // Build menu
     let menu = Menu::with_items(app, &[&show_hide, &status_item, &quit])?;
@@ -22,8 +29,8 @@ pub fn create_tray(app: &App) -> tauri::Result<()> {
     let (w, h) = icon.dimensions();
     let icon = Image::new_owned(icon.into_raw(), w, h);
 
-    // Build tray
-    let _tray = TrayIconBuilder::new()
+    // Build tray with a known id so we can retrieve it later
+    let _tray = TrayIconBuilder::with_id("main")
         .icon(icon)
         .menu(&menu)
         .show_menu_on_left_click(true)
@@ -50,16 +57,38 @@ pub fn create_tray(app: &App) -> tauri::Result<()> {
     Ok(())
 }
 
-pub fn update_tray_status(_app: &App, status: &str) -> tauri::Result<()> {
-    let status_label = match status {
+fn get_status_label(status: &str) -> &str {
+    match status {
         "idle" => "空闲",
         "active" => "活跃",
         "working" => "工作中",
         "waiting" => "等待中",
         "error" => "错误",
         _ => "未知",
-    };
+    }
+}
 
+pub fn update_tray_status(_app: &App, status: &str) -> tauri::Result<()> {
+    let status_label = get_status_label(status);
+    if let Some(item) = STATUS_ITEM.get() {
+        let _ = item.set_text(format!("状态: {}", status_label));
+    }
     log::info!("Tray status updated: {}", status_label);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_label_mapping() {
+        assert_eq!(get_status_label("idle"), "空闲");
+        assert_eq!(get_status_label("active"), "活跃");
+        assert_eq!(get_status_label("working"), "工作中");
+        assert_eq!(get_status_label("waiting"), "等待中");
+        assert_eq!(get_status_label("error"), "错误");
+        assert_eq!(get_status_label("unknown"), "未知");
+        assert_eq!(get_status_label(""), "未知");
+    }
 }

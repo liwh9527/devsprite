@@ -40,7 +40,7 @@ pub fn run() {
             // Register global shortcut
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
             let global_shortcut = app.global_shortcut();
-            let _ = global_shortcut.on_shortcut(hotkey.as_str(), move |app_handle, shortcut, event| {
+            let _ = global_shortcut.on_shortcut(hotkey.as_str(), move |app_handle, _shortcut, event| {
                 if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
                     if let Some(window) = app_handle.get_webview_window("main") {
                         if window.is_visible().unwrap_or(false) {
