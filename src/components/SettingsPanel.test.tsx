@@ -43,7 +43,7 @@ describe("SettingsPanel", () => {
     // Section headers contain emojis, so use partial match
     expect(screen.getByText(/外观/)).toBeDefined();
     expect(screen.getByText(/行为/)).toBeDefined();
-    expect(screen.getByText(/连接/)).toBeDefined();
+    expect(screen.getByText(/📡 连接/)).toBeDefined();
   });
 
   it("should call onClose when close button clicked", () => {

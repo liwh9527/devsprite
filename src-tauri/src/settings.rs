@@ -123,6 +123,7 @@ pub enum ValidationError {
     MaxToolCallsOutOfRange(u32),
     PermissionTimeoutOutOfRange(u32),
     BufferSizeOutOfRange(usize),
+    ConnectTimeoutOutOfRange(u32),
     HotkeyEmpty,
     MaxRetriesOutOfRange(u32),
 }
@@ -149,6 +150,9 @@ impl std::fmt::Display for ValidationError {
             }
             Self::BufferSizeOutOfRange(v) => {
                 write!(f, "Buffer size out of range (1024-65536): {}", v)
+            }
+            Self::ConnectTimeoutOutOfRange(v) => {
+                write!(f, "Connect timeout out of range (1000-10000): {}", v)
             }
             Self::HotkeyEmpty => write!(f, "Hotkey cannot be empty"),
             Self::MaxRetriesOutOfRange(v) => {
@@ -210,6 +214,10 @@ impl Settings {
         }
         if !(1024..=65536).contains(&self.pipe.buffer_size) {
             errors.push(ValidationError::BufferSizeOutOfRange(self.pipe.buffer_size));
+        }
+
+        if !(1000..=10000).contains(&self.pipe.connect_timeout) {
+            errors.push(ValidationError::ConnectTimeoutOutOfRange(self.pipe.connect_timeout));
         }
 
         if self.behavior.hotkey.trim().is_empty() {

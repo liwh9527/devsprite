@@ -215,6 +215,32 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             />
             <span className="w-10 text-right">{localSettings.pipe.max_retries}</span>
           </label>
+          <label className="flex items-center justify-between text-xs">
+            <span>缓冲区</span>
+            <input
+              type="range"
+              min={1024}
+              max={65536}
+              step={1024}
+              value={localSettings.pipe.buffer_size}
+              onChange={(e) => handlePipeChange("buffer_size", Number(e.target.value))}
+              className="w-24"
+            />
+            <span className="w-10 text-right">{localSettings.pipe.buffer_size}</span>
+          </label>
+          <label className="flex items-center justify-between text-xs">
+            <span>连接超时</span>
+            <input
+              type="range"
+              min={1000}
+              max={10000}
+              step={100}
+              value={localSettings.pipe.connect_timeout}
+              onChange={(e) => handlePipeChange("connect_timeout", Number(e.target.value))}
+              className="w-24"
+            />
+            <span className="w-10 text-right">{localSettings.pipe.connect_timeout}ms</span>
+          </label>
         </div>
 
         {/* Footer */}
