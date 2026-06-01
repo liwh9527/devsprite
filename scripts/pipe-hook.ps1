@@ -2,8 +2,7 @@
 # Called by Claude Code hooks (PreToolUse, PostToolUse, Notification, etc.)
 
 param(
-    [string]$Event = "",
-    [string]$ToolName = ""
+    [string]$Event = ""
 )
 
 # Read the full JSON payload from stdin
@@ -19,7 +18,7 @@ switch ($Event) {
     "PreToolUse" {
         $devspriteEvent = "tool_call"
         $data = @{
-            tool_name = if ($input.tool_name) { $input.tool_name } else { $ToolName }
+            tool_name = if ($input.tool_name) { $input.tool_name } else { "" }
             file_path = if ($input.tool_input.file_path) { $input.tool_input.file_path } else { "" }
             status = "running"
         }
@@ -27,7 +26,7 @@ switch ($Event) {
     "PostToolUse" {
         $devspriteEvent = "tool_call"
         $data = @{
-            tool_name = if ($input.tool_name) { $input.tool_name } else { $ToolName }
+            tool_name = if ($input.tool_name) { $input.tool_name } else { "" }
             file_path = if ($input.tool_input.file_path) { $input.tool_input.file_path } else { "" }
             status = "completed"
         }
