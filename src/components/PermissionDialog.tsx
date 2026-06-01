@@ -49,14 +49,14 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
         <p className="text-[10px] font-medium text-yellow-800 mb-1">
           权限请求
         </p>
-        <p className="text-[9px] text-yellow-600 mb-1 truncate">
+        <p className="text-[9px] text-yellow-600 mb-1 truncate" title={request.operation}>
           <span className="font-semibold">操作:</span> {request.operation}
         </p>
-        <p className="text-[9px] text-yellow-600 mb-1 truncate">
+        <p className="text-[9px] text-yellow-600 mb-1 truncate" title={request.target}>
           <span className="font-semibold">目标:</span> {request.target}
         </p>
         {request.reason && (
-          <p className="text-[9px] text-yellow-500 mb-2 truncate">
+          <p className="text-[9px] text-yellow-500 mb-2 truncate" title={request.reason}>
             <span className="font-semibold">原因:</span> {request.reason}
           </p>
         )}
