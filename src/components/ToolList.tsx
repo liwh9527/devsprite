@@ -15,6 +15,12 @@ const toolIcons: Record<string, string> = {
   Bash: "💻",
 };
 
+const statusColors: Record<string, string> = {
+  pending: "text-yellow-500",
+  completed: "text-green-500",
+  failed: "text-red-500",
+};
+
 function formatTime(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
   if (seconds < 60) return `${seconds}s`;
@@ -45,7 +51,7 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5 
             key={call.id}
             className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
           >
-            <span className="text-xs shrink-0">
+            <span className={`text-xs shrink-0 ${statusColors[call.status] || ""}`}>
               {toolIcons[call.toolName] || "🔧"}
             </span>
             <span className="text-xs font-medium text-gray-800 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
