@@ -23,6 +23,7 @@ export const Widget: React.FC = () => {
   } = useAppStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const currentPermission = permissionRequests[0];
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -37,7 +38,7 @@ export const Widget: React.FC = () => {
   }, [loadSettings]);
 
   return (
-    <div className="pet-container" onMouseDown={handleMouseDown}>
+    <div className={`pet-container ${isPinned ? "pinned" : ""}`} onMouseDown={handleMouseDown}>
       {/* The pet - always visible */}
       <div className="pet-body">
         <Mascot status={status} />
@@ -51,7 +52,16 @@ export const Widget: React.FC = () => {
             background: `linear-gradient(to right, var(--color-primary), var(--color-primary-dark))`,
           }}
         >
-          <h1 className="text-white font-bold text-sm">DevSprite</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-white font-bold text-sm">DevSprite</h1>
+            <button
+              onClick={() => setIsPinned(!isPinned)}
+              className="text-white/70 hover:text-white text-xs"
+              title={isPinned ? "取消锁定" : "锁定面板"}
+            >
+              {isPinned ? "📌" : "📍"}
+            </button>
+          </div>
         </div>
 
         <StatusCard status={status} message={statusMessage} />
