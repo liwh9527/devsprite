@@ -70,7 +70,7 @@ impl NamedPipeListener {
                                 pcwstr,
                                 PIPE_ACCESS_INBOUND,
                                 PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-                                1,
+                                255,  // PIPE_UNLIMITED_INSTANCES - support multiple concurrent sessions
                                 0,
                                 buffer_size as u32,
                                 0,
@@ -107,36 +107,43 @@ impl NamedPipeListener {
                     continue;
                 }
 
-                log::info!("Client connected, reading data...");
+                log::info!("Client connected, spawning reader thread...");
 
-                let mut buffer = vec![0u8; buffer_size];
-                let mut bytes_read = 0u32;
+                let tx_clone = tx.clone();
+                // Convert HANDLE to usize for safe cross-thread transfer (*mut c_void is !Send).
+                // Safety: pipe HANDLEs are kernel objects usable from any thread.
+                let raw = handle.0 as usize;
+                std::thread::spawn(move || {
+                    let handle = HANDLE(raw as *mut std::ffi::c_void);
+                    let mut buffer = vec![0u8; buffer_size];
+                    let mut bytes_read = 0u32;
 
-                loop {
-                    let success = ReadFile(
-                        handle,
-                        Some(&mut buffer),
-                        Some(&mut bytes_read),
-                        None,
-                    );
+                    loop {
+                        let success = ReadFile(
+                            handle,
+                            Some(&mut buffer),
+                            Some(&mut bytes_read),
+                            None,
+                        );
 
-                    match success {
-                        Ok(()) if bytes_read == 0 => break,
-                        Ok(()) => {
-                            let msg =
-                                String::from_utf8_lossy(&buffer[..bytes_read as usize]);
-                            log::info!("Received: {}", &msg[..msg.len().min(100)]);
-                            if tx.blocking_send(msg.to_string()).is_err() {
-                                break;
+                        match success {
+                            Ok(()) if bytes_read == 0 => break,
+                            Ok(()) => {
+                                let msg =
+                                    String::from_utf8_lossy(&buffer[..bytes_read as usize]);
+                                log::info!("Received: {}", &msg[..msg.len().min(100)]);
+                                if tx_clone.blocking_send(msg.to_string()).is_err() {
+                                    break;
+                                }
                             }
+                            Err(_) => break,
                         }
-                        Err(_) => break,
                     }
-                }
 
-                log::info!("Client disconnected");
-                DisconnectNamedPipe(handle).ok();
-                CloseHandle(handle).ok();
+                    log::info!("Client disconnected");
+                    DisconnectNamedPipe(handle).ok();
+                    CloseHandle(handle).ok();
+                });
             }
         }
     }
