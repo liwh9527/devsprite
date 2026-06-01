@@ -72,6 +72,20 @@ pub struct BehaviorSettings {
     pub max_tool_calls: u32,
     pub permission_timeout: u32,
     pub hotkey: String,
+    #[serde(default)]
+    pub auto_launch: bool,
+    #[serde(default = "default_sound_enabled")]
+    pub sound_enabled: bool,
+    #[serde(default = "default_sound_volume")]
+    pub sound_volume: u32,
+}
+
+fn default_sound_enabled() -> bool {
+    true
+}
+
+fn default_sound_volume() -> u32 {
+    80
 }
 
 impl Default for BehaviorSettings {
@@ -80,6 +94,9 @@ impl Default for BehaviorSettings {
             max_tool_calls: 5,
             permission_timeout: 30,
             hotkey: "Ctrl+Shift+D".to_string(),
+            auto_launch: false,
+            sound_enabled: true,
+            sound_volume: 80,
         }
     }
 }
@@ -356,6 +373,8 @@ mod tests {
         // BehaviorSettings
         assert_eq!(settings.behavior.max_tool_calls, 5);
         assert_eq!(settings.behavior.permission_timeout, 30);
+        assert_eq!(settings.behavior.sound_enabled, true);
+        assert_eq!(settings.behavior.sound_volume, 80);
     }
 
     #[test]
@@ -498,6 +517,9 @@ mod tests {
                 max_tool_calls: 7,
                 permission_timeout: 45,
                 hotkey: "Ctrl+Shift+D".to_string(),
+                auto_launch: true,
+                sound_enabled: true,
+                sound_volume: 80,
             },
         };
 
@@ -522,6 +544,7 @@ mod tests {
 
         assert_eq!(deserialized.behavior.max_tool_calls, 7);
         assert_eq!(deserialized.behavior.permission_timeout, 45);
+        assert_eq!(deserialized.behavior.auto_launch, true);
     }
 
     #[test]

@@ -76,7 +76,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       panel_background_opacity: 0.95,
       panel_border_radius: 12,
     },
-    behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
+    behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D", sound_enabled: true, sound_volume: 80, auto_launch: false },
   },
 
   ensureSession: (sessionId: string) => {

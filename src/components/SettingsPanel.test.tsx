@@ -27,7 +27,7 @@ describe("SettingsPanel", () => {
           panel_background_opacity: 0.95,
           panel_border_radius: 12,
         },
-        behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
+        behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D", sound_enabled: true, sound_volume: 80, auto_launch: false },
       },
     });
     vi.clearAllMocks();
@@ -87,13 +87,14 @@ describe("SettingsPanel", () => {
     render(<SettingsPanel onClose={mockOnClose} />);
 
     const sliders = screen.getAllByRole("slider");
-    // Order: panel_width(0), border_radius(1), opacity(2), max_tool_calls(3), permission_timeout(4), max_retries(5)
+    // Order: panel_width(0), border_radius(1), opacity(2), max_tool_calls(3), permission_timeout(4), sound_volume(5), max_retries(6)
     expect(sliders[0]).toHaveValue("200");
     expect(sliders[1]).toHaveValue("12");
     expect(sliders[2]).toHaveValue("95");   // opacity = 0.95 * 100
     expect(sliders[3]).toHaveValue("5");    // max_tool_calls
     expect(sliders[4]).toHaveValue("30");   // permission_timeout
-    expect(sliders[5]).toHaveValue("3");    // max_retries
+    expect(sliders[5]).toHaveValue("80");   // sound_volume
+    expect(sliders[6]).toHaveValue("3");    // max_retries
   });
 
   it("should update slider value on change", () => {

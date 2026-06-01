@@ -121,6 +121,9 @@ export interface BehaviorSettings {
   max_tool_calls: number;
   permission_timeout: number;
   hotkey: string;
+  sound_enabled: boolean;
+  sound_volume: number; // 0-100
+  auto_launch: boolean;
 }
 
 export interface Settings {

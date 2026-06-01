@@ -23,7 +23,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     }));
   };
 
-  const handleBehaviorChange = (key: keyof BehaviorSettings, value: number | string | null) => {
+  const handleBehaviorChange = (key: keyof BehaviorSettings, value: number | string | boolean | null) => {
     setLocalSettings((prev) => ({
       ...prev,
       behavior: { ...prev.behavior, [key]: value },
@@ -63,7 +63,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         panel_background_opacity: 0.95,
         panel_border_radius: 12,
       },
-      behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
+      behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D", sound_enabled: true, sound_volume: 80, auto_launch: false },
     };
     setLocalSettings(defaults);
   };
@@ -186,6 +186,38 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                 onChange={(e) => handleBehaviorChange("hotkey", e.target.value)}
                 className="w-24 text-right text-xs border rounded px-1 py-0.5"
                 placeholder="Ctrl+Shift+D"
+              />
+            </label>
+            <label className="flex items-center justify-between text-xs">
+              <span>音效</span>
+              <input
+                type="checkbox"
+                checked={localSettings.behavior.sound_enabled}
+                onChange={(e) => handleBehaviorChange("sound_enabled", e.target.checked)}
+                className="w-4 h-4 rounded cursor-pointer"
+              />
+            </label>
+            {localSettings.behavior.sound_enabled && (
+              <label className="flex items-center justify-between text-xs">
+                <span>音量</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={localSettings.behavior.sound_volume}
+                  onChange={(e) => handleBehaviorChange("sound_volume", Number(e.target.value))}
+                  className="w-24"
+                />
+                <span className="w-10 text-right">{localSettings.behavior.sound_volume}%</span>
+              </label>
+            )}
+            <label className="flex items-center justify-between text-xs">
+              <span>开机自启动</span>
+              <input
+                type="checkbox"
+                checked={localSettings.behavior.auto_launch}
+                onChange={(e) => handleBehaviorChange("auto_launch", e.target.checked)}
+                className="w-4 h-4 rounded cursor-pointer"
               />
             </label>
           </div>

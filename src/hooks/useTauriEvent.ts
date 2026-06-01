@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useAppStore } from "../stores/appStore";
+import {
+  playStartSound,
+  playCompleteSound,
+  playErrorSound,
+  playApprovalSound,
+} from "../utils/sounds";
 import type {
   DevSpriteEvent,
   ToolCallData,
@@ -25,6 +31,9 @@ export function useTauriEvent() {
   useEffect(() => {
     const unlisten = listen<DevSpriteEvent>("devsprite-event", (event) => {
       const { event: eventType, session_id, data } = event.payload;
+      const { settings } = useAppStore.getState();
+      const soundEnabled = settings.behavior.sound_enabled;
+      const soundVolume = settings.behavior.sound_volume / 100;
 
       // Ensure session exists and is active
       ensureSession(session_id);
@@ -33,10 +42,12 @@ export function useTauriEvent() {
       switch (eventType) {
         case "session_start":
           setStatus("active", "会话开始");
+          if (soundEnabled) playStartSound(soundVolume);
           break;
 
         case "session_end":
           setStatus("idle", "会话结束");
+          if (soundEnabled) playCompleteSound(soundVolume);
           break;
 
         case "tool_call": {
@@ -51,6 +62,7 @@ export function useTauriEvent() {
             detail: toolData.detail,
           });
           setStatus("working", `正在执行 ${toolData.tool_name}`);
+          if (soundEnabled && toolData.status === "failed") playErrorSound(soundVolume);
           break;
         }
 
@@ -69,6 +81,7 @@ export function useTauriEvent() {
           });
           startPermissionTimeout(requestId);
           setStatus("waiting", "等待权限批准");
+          if (soundEnabled) playApprovalSound(soundVolume);
           break;
         }
 
@@ -80,6 +93,7 @@ export function useTauriEvent() {
 
         case "ai_response":
           setStatus("active", "AI 已回复");
+          if (soundEnabled) playCompleteSound(soundVolume);
           break;
 
         case "user_prompt": {

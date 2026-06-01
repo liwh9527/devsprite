@@ -21,6 +21,15 @@ vi.mock("@tauri-apps/api/window", () => ({
   })),
 }));
 
+// Mock sounds module (AudioContext not available in jsdom)
+vi.mock("../utils/sounds", () => ({
+  playStartSound: vi.fn(),
+  playCompleteSound: vi.fn(),
+  playErrorSound: vi.fn(),
+  playApprovalSound: vi.fn(),
+  playSubmitSound: vi.fn(),
+}));
+
 // Mock crypto.randomUUID for jsdom
 if (typeof crypto.randomUUID !== "function") {
   Object.defineProperty(globalThis, "crypto", {
@@ -44,7 +53,7 @@ const defaultSettings = {
     panel_background_opacity: 0.95,
     panel_border_radius: 12,
   },
-  behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
+  behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D", sound_enabled: true, sound_volume: 80 },
 };
 
 describe("useTauriEvent", () => {
@@ -317,7 +326,7 @@ describe("useTauriEvent", () => {
         panel_background_opacity: 0.8,
         panel_border_radius: 16,
       },
-      behavior: { max_tool_calls: 8, permission_timeout: 45, hotkey: "Ctrl+Shift+D" },
+      behavior: { max_tool_calls: 8, permission_timeout: 45, hotkey: "Ctrl+Shift+D", sound_enabled: true, sound_volume: 80 },
     });
 
     const setPropertySpy = vi.spyOn(document.documentElement.style, "setProperty").mockImplementation(() => {});
