@@ -22,5 +22,8 @@ windows = { version = "0.61", features = [
     "Win32_System_Pipes",
 ] }
 
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
