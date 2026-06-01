@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { Mascot } from "./Mascot";
 import { StatusCard } from "./StatusCard";
+import { SessionSwitcher } from "./SessionSwitcher";
 import { ToolList } from "./ToolList";
 import { PermissionDialog } from "./PermissionDialog";
 import { SettingsPanel } from "./SettingsPanel";
@@ -63,6 +64,8 @@ export const Widget: React.FC = () => {
         </div>
 
         <StatusCard status={status} message={statusMessage} />
+
+        <SessionSwitcher />
 
         <ToolList toolCalls={toolCalls} maxToolCalls={settings.behavior.max_tool_calls} />
 
