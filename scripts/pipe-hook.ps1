@@ -17,18 +17,40 @@ $data = @{}
 switch ($Event) {
     "PreToolUse" {
         $devspriteEvent = "tool_call"
+        $toolInput = $input.tool_input
+        $detail = ""
+        switch ($input.tool_name) {
+            "Bash" { $detail = if ($toolInput.command) { $toolInput.command } else { "" } }
+            "Edit" { $detail = if ($toolInput.old_string) { "Old: $($toolInput.old_string)`nNew: $($toolInput.new_string)" } else { "" } }
+            "Write" { $detail = if ($toolInput.content) { $toolInput.content.Substring(0, [Math]::Min(200, $toolInput.content.Length)) } else { "" } }
+            "Read" { $detail = if ($toolInput.file_path) { $toolInput.file_path } else { "" } }
+            "Grep" { $detail = if ($toolInput.pattern) { $toolInput.pattern } else { "" } }
+            "Glob" { $detail = if ($toolInput.pattern) { $toolInput.pattern } else { "" } }
+        }
         $data = @{
             tool_name = if ($input.tool_name) { $input.tool_name } else { "" }
-            file_path = if ($input.tool_input.file_path) { $input.tool_input.file_path } else { "" }
+            file_path = if ($toolInput.file_path) { $toolInput.file_path } else { "" }
             status = "running"
+            detail = $detail
         }
     }
     "PostToolUse" {
         $devspriteEvent = "tool_call"
+        $toolInput = $input.tool_input
+        $detail = ""
+        switch ($input.tool_name) {
+            "Bash" { $detail = if ($toolInput.command) { $toolInput.command } else { "" } }
+            "Edit" { $detail = if ($toolInput.old_string) { "Old: $($toolInput.old_string)`nNew: $($toolInput.new_string)" } else { "" } }
+            "Write" { $detail = if ($toolInput.content) { $toolInput.content.Substring(0, [Math]::Min(200, $toolInput.content.Length)) } else { "" } }
+            "Read" { $detail = if ($toolInput.file_path) { $toolInput.file_path } else { "" } }
+            "Grep" { $detail = if ($toolInput.pattern) { $toolInput.pattern } else { "" } }
+            "Glob" { $detail = if ($toolInput.pattern) { $toolInput.pattern } else { "" } }
+        }
         $data = @{
             tool_name = if ($input.tool_name) { $input.tool_name } else { "" }
-            file_path = if ($input.tool_input.file_path) { $input.tool_input.file_path } else { "" }
+            file_path = if ($toolInput.file_path) { $toolInput.file_path } else { "" }
             status = "completed"
+            detail = $detail
         }
     }
     "Notification" {
@@ -46,6 +68,44 @@ switch ($Event) {
     "SessionStart" {
         $devspriteEvent = "session_start"
         $data = @{}
+    }
+    "UserPromptSubmit" {
+        $devspriteEvent = "user_prompt"
+        $data = @{
+            prompt = if ($input.prompt) { $input.prompt.Substring(0, [Math]::Min(200, $input.prompt.Length)) } else { "" }
+        }
+    }
+    "PostToolUseFailure" {
+        $devspriteEvent = "tool_call"
+        $data = @{
+            tool_name = if ($input.tool_name) { $input.tool_name } else { "" }
+            file_path = if ($input.tool_input.file_path) { $input.tool_input.file_path } else { "" }
+            status = "failed"
+            error = if ($input.error) { $input.error.Substring(0, [Math]::Min(200, $input.error.Length)) } else { "" }
+        }
+    }
+    "SubagentStart" {
+        $devspriteEvent = "subagent_start"
+        $data = @{
+            agent_id = if ($input.agent_id) { $input.agent_id } else { "" }
+        }
+    }
+    "SubagentStop" {
+        $devspriteEvent = "subagent_stop"
+        $data = @{
+            agent_id = if ($input.agent_id) { $input.agent_id } else { "" }
+        }
+    }
+    "PermissionDenied" {
+        $devspriteEvent = "permission_denied"
+        $data = @{}
+    }
+    "PreCompact" {
+        $devspriteEvent = "status_change"
+        $data = @{
+            status = "active"
+            message = "正在压缩上下文..."
+        }
     }
     default {
         $devspriteEvent = "status_change"

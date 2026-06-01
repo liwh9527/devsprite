@@ -6,6 +6,7 @@ import type {
   ToolCallData,
   PermissionRequestData,
   StatusChangeData,
+  UserPromptData,
   SpriteStatus,
 } from "../types";
 
@@ -17,6 +18,7 @@ export function useTauriEvent() {
     addToolCall,
     addPermissionRequest,
     startPermissionTimeout,
+    addChatMessage,
     loadSettings,
   } = useAppStore();
 
@@ -46,6 +48,7 @@ export function useTauriEvent() {
             status: toolData.status as "pending" | "completed" | "failed",
             timestamp: Date.now(),
             sessionId: session_id,
+            detail: toolData.detail,
           });
           setStatus("working", `正在执行 ${toolData.tool_name}`);
           break;
@@ -76,13 +79,32 @@ export function useTauriEvent() {
         case "ai_response":
           setStatus("active", "AI 已回复");
           break;
+
+        case "user_prompt": {
+          const promptData = data as unknown as UserPromptData;
+          setStatus("active", "用户发送消息");
+          addChatMessage({ role: "user", content: promptData.prompt, timestamp: Date.now() });
+          break;
+        }
+
+        case "subagent_start":
+          setStatus("working", "子智能体启动");
+          break;
+
+        case "subagent_stop":
+          setStatus("active", "子智能体完成");
+          break;
+
+        case "permission_denied":
+          setStatus("active", "权限被拒绝");
+          break;
       }
     });
 
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [ensureSession, setActiveSession, setStatus, addToolCall, addPermissionRequest, startPermissionTimeout]);
+  }, [ensureSession, setActiveSession, setStatus, addToolCall, addPermissionRequest, startPermissionTimeout, addChatMessage]);
 
   useEffect(() => {
     const unlisten = listen<null>("settings-changed", () => {

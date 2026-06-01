@@ -13,6 +13,8 @@ pub struct ToolCallData {
     pub tool_name: String,
     pub file_path: String,
     pub status: String,
+    #[serde(default)]
+    pub detail: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,12 +22,24 @@ pub struct PermissionRequestData {
     pub operation: String,
     pub target: String,
     pub reason: String,
+    #[serde(default)]
+    pub detail: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatusChangeData {
     pub status: String,
     pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserPromptData {
+    pub prompt: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubagentData {
+    pub agent_id: String,
 }
 
 impl DevSpriteEvent {

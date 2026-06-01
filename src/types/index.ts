@@ -1,5 +1,11 @@
 export type SpriteStatus = "idle" | "active" | "working" | "waiting" | "error";
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+}
+
 export interface ToolCall {
   id: string;
   toolName: string;
@@ -7,6 +13,7 @@ export interface ToolCall {
   status: "pending" | "completed" | "failed";
   timestamp: number;
   sessionId: string;
+  detail?: string;
 }
 
 export interface PermissionRequest {
@@ -16,6 +23,7 @@ export interface PermissionRequest {
   reason: string;
   timestamp: number;
   sessionId: string;
+  detail?: string;
 }
 
 export interface PermissionResponse {
@@ -33,7 +41,11 @@ export interface DevSpriteEvent {
     | "permission_request"
     | "permission_response"
     | "status_change"
-    | "ai_response";
+    | "ai_response"
+    | "user_prompt"
+    | "subagent_start"
+    | "subagent_stop"
+    | "permission_denied";
   timestamp: string;
   session_id: string;
   data: Record<string, unknown>;
@@ -43,17 +55,27 @@ export interface ToolCallData {
   tool_name: string;
   file_path: string;
   status: "pending" | "completed" | "failed";
+  detail?: string;
 }
 
 export interface PermissionRequestData {
   operation: string;
   target: string;
   reason: string;
+  detail?: string;
 }
 
 export interface StatusChangeData {
   status: SpriteStatus;
   message: string;
+}
+
+export interface UserPromptData {
+  prompt: string;
+}
+
+export interface SubagentData {
+  agent_id: string;
 }
 
 export interface SessionState {
@@ -62,6 +84,7 @@ export interface SessionState {
   statusMessage: string;
   toolCalls: ToolCall[];
   permissionRequests: PermissionRequest[];
+  chatMessages: ChatMessage[];
   lastActive: number;
 }
 

@@ -49,17 +49,24 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5 
         {toolCalls.slice(0, maxToolCalls).map((call) => (
           <div
             key={call.id}
-            className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
+            className="flex flex-col py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
           >
-            <span className={`text-xs shrink-0 ${statusColors[call.status] || ""}`}>
-              {toolIcons[call.toolName] || "🔧"}
-            </span>
-            <span className="text-xs font-medium text-gray-800 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-              {call.toolName}
-            </span>
-            <span className="text-[10px] text-gray-500 shrink-0 ml-auto">
-              {formatTime(call.timestamp)}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-xs shrink-0 ${statusColors[call.status] || ""}`}>
+                {toolIcons[call.toolName] || "🔧"}
+              </span>
+              <span className="text-xs font-medium text-gray-800 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                {call.toolName}
+              </span>
+              <span className="text-[10px] text-gray-500 shrink-0 ml-auto">
+                {formatTime(call.timestamp)}
+              </span>
+            </div>
+            {call.detail && (
+              <span className="text-[9px] text-gray-400 truncate w-full pl-5" title={call.detail}>
+                {call.detail.length > 30 ? call.detail.slice(0, 30) + "..." : call.detail}
+              </span>
+            )}
           </div>
         ))}
       </div>

@@ -55,6 +55,11 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
         <p className="text-[9px] text-yellow-600 mb-1 truncate" title={request.target}>
           <span className="font-semibold">目标:</span> {request.target}
         </p>
+        {request.detail && (
+          <p className="text-[9px] text-yellow-500 mb-1 truncate" title={request.detail}>
+            <span className="font-semibold">详情:</span> {request.detail.length > 40 ? request.detail.slice(0, 40) + "..." : request.detail}
+          </p>
+        )}
         {request.reason && (
           <p className="text-[9px] text-yellow-500 mb-2 truncate" title={request.reason}>
             <span className="font-semibold">原因:</span> {request.reason}
