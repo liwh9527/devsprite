@@ -3,6 +3,7 @@ import { Mascot } from "./Mascot";
 import { StatusCard } from "./StatusCard";
 import { SessionSwitcher } from "./SessionSwitcher";
 import { ToolList } from "./ToolList";
+import { ChatHistory } from "./ChatHistory";
 import { PermissionDialog } from "./PermissionDialog";
 import { SettingsPanel } from "./SettingsPanel";
 import { useAppStore, getActiveSession } from "../stores/appStore";
@@ -17,6 +18,7 @@ export const Widget: React.FC = () => {
   const status = useAppStore((s) => getActiveSession(s)?.status ?? "idle");
   const statusMessage = useAppStore((s) => getActiveSession(s)?.statusMessage ?? "");
   const toolCalls = useAppStore((s) => getActiveSession(s)?.toolCalls ?? []);
+  const chatMessages = useAppStore((s) => getActiveSession(s)?.chatMessages ?? []);
   const permissionRequests = useAppStore((s) => getActiveSession(s)?.permissionRequests ?? []);
   const settings = useAppStore((s) => s.settings);
   const loadSettings = useAppStore((s) => s.loadSettings);
@@ -68,6 +70,10 @@ export const Widget: React.FC = () => {
         <SessionSwitcher />
 
         <ToolList toolCalls={toolCalls} maxToolCalls={settings.behavior.max_tool_calls} />
+
+        {chatMessages.length > 0 && (
+          <ChatHistory messages={chatMessages} />
+        )}
 
         {currentPermission && (
           <PermissionDialog

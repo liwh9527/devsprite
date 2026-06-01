@@ -391,4 +391,39 @@ describe("useAppStore", () => {
     expect(getActiveSession(state2)).toBeDefined();
     expect(getActiveSession(state2)!.sessionId).toBe("sess1");
   });
+
+  it("should add chat message with addChatMessage", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+    useAppStore.getState().addChatMessage({
+      role: "user",
+      content: "Hello world",
+      timestamp: Date.now(),
+    });
+    const session = useAppStore.getState().sessions.get("sess1")!;
+    expect(session.chatMessages).toHaveLength(1);
+    expect(session.chatMessages[0].role).toBe("user");
+    expect(session.chatMessages[0].content).toBe("Hello world");
+  });
+
+  it("should limit chat messages to 20", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+    for (let i = 0; i < 25; i++) {
+      useAppStore.getState().addChatMessage({
+        role: i % 2 === 0 ? "user" : "assistant",
+        content: `Message ${i}`,
+        timestamp: Date.now() + i,
+      });
+    }
+    expect(useAppStore.getState().sessions.get("sess1")!.chatMessages).toHaveLength(20);
+    // Should keep the last 20
+    expect(useAppStore.getState().sessions.get("sess1")!.chatMessages[0].content).toBe("Message 5");
+  });
+
+  it("should initialize chatMessages as empty array in new sessions", () => {
+    useAppStore.getState().ensureSession("sess1");
+    const session = useAppStore.getState().sessions.get("sess1")!;
+    expect(session.chatMessages).toEqual([]);
+  });
 });

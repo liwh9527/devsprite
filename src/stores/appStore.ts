@@ -7,6 +7,7 @@ import type {
   ToolCall,
   PermissionRequest,
   PermissionResponse,
+  ChatMessage,
   Settings,
   ThemeSettings,
 } from "../types";
@@ -19,6 +20,7 @@ export const createSession = (sessionId: string): SessionState => ({
   statusMessage: "",
   toolCalls: [],
   permissionRequests: [],
+  chatMessages: [],
   lastActive: Date.now(),
 });
 
@@ -52,6 +54,7 @@ interface AppStore extends AppState {
   addPermissionRequest: (request: PermissionRequest) => void;
   removePermissionRequest: (id: string) => void;
   respondToPermission: (requestId: string, approved: boolean) => Promise<void>;
+  addChatMessage: (message: ChatMessage) => void;
   loadSettings: () => Promise<void>;
   updateSettings: (settings: Settings) => Promise<{ success: boolean; error?: string }>;
   applyTheme: (theme: ThemeSettings) => void;
@@ -138,6 +141,22 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const session = sessions.get(state.activeSessionId);
       if (session) {
         sessions.set(state.activeSessionId, { ...session, toolCalls: [] });
+      }
+      return { sessions };
+    }),
+
+  addChatMessage: (message) =>
+    set((state) => {
+      const sid = state.activeSessionId;
+      if (!sid) return state;
+      const sessions = new Map(state.sessions);
+      const session = sessions.get(sid);
+      if (session) {
+        sessions.set(sid, {
+          ...session,
+          chatMessages: [...session.chatMessages, message].slice(-20),
+          lastActive: Date.now(),
+        });
       }
       return { sessions };
     }),

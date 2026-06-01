@@ -56,7 +56,9 @@ export function useTauriEvent() {
 
         case "permission_request": {
           const permData = data as unknown as PermissionRequestData;
-          const requestId = crypto.randomUUID();
+          // Use server-generated request_id for pipe-based correlation,
+          // falling back to random UUID for backward compatibility.
+          const requestId = (data as Record<string, unknown>).request_id as string || crypto.randomUUID();
           addPermissionRequest({
             id: requestId,
             operation: permData.operation,

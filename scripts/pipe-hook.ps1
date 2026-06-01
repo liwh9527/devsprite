@@ -1,5 +1,9 @@
 # DevSprite Claude Code Hook - Reads stdin and sends to Named Pipe
 # Called by Claude Code hooks (PreToolUse, PostToolUse, Notification, etc.)
+#
+# For PermissionRequest events, uses bidirectional pipe communication:
+#   sends the request, waits for user response, outputs result to stdout.
+# For all other events, uses fire-and-forget (write-only pipe).
 
 param(
     [string]$Event = ""
@@ -13,6 +17,7 @@ $input = $stdin | ConvertFrom-Json
 $devspriteEvent = "status_change"
 $sessionId = if ($input.session_id) { $input.session_id } else { [guid]::NewGuid().ToString() }
 $data = @{}
+$isBlocking = $false
 
 switch ($Event) {
     "PreToolUse" {
@@ -100,6 +105,15 @@ switch ($Event) {
         $devspriteEvent = "permission_denied"
         $data = @{}
     }
+    "PermissionRequest" {
+        $devspriteEvent = "permission_request"
+        $isBlocking = $true
+        $data = @{
+            operation = if ($input.tool_name) { $input.tool_name } else { "" }
+            target = if ($input.tool_input.file_path) { $input.tool_input.file_path } else { "" }
+            reason = if ($input.tool_input.reason) { $input.tool_input.reason } else { "" }
+        }
+    }
     "PreCompact" {
         $devspriteEvent = "status_change"
         $data = @{
@@ -128,20 +142,61 @@ $message = @{
 $pipeName = "devsprite"
 
 try {
-    $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(
-        ".",
-        $pipeName,
-        [System.IO.Pipes.PipeDirection]::Out
-    )
+    if ($isBlocking) {
+        # === Bidirectional: PermissionRequest ===
+        # Connect with InOut so we can read the response back from the server.
+        $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(
+            ".",
+            $pipeName,
+            [System.IO.Pipes.PipeDirection]::InOut
+        )
+        $pipe.Connect(3000)
+        # 30-second read timeout; if no response, fail-open.
+        $pipe.ReadTimeout = 30000
 
-    $pipe.Connect(3000)
+        $writer = New-Object System.IO.StreamWriter($pipe)
+        $writer.WriteLine($message)
+        $writer.Flush()
 
-    $writer = New-Object System.IO.StreamWriter($pipe)
-    $writer.WriteLine($message)
-    $writer.Flush()
-    $writer.Dispose()
-    $pipe.Dispose()
-}
-catch {
-    # Silently ignore - pipe might not be running
+        # Wait for the user to respond in the DevSprite UI.
+        $reader = New-Object System.IO.StreamReader($pipe)
+        $response = $null
+        try {
+            $response = $reader.ReadLine()
+        } catch [System.IO.IOException] {
+            # Read timeout — fail-open (default to approved).
+            $response = '{"approved": true}'
+        }
+
+        $reader.Dispose()
+        $writer.Dispose()
+        $pipe.Dispose()
+
+        # Output the response to stdout so Claude Code reads it.
+        if ($response) {
+            Write-Output $response
+        } else {
+            # Pipe closed without response — fail-open.
+            Write-Output '{"approved": true}'
+        }
+    } else {
+        # === Fire-and-forget: all other events ===
+        $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(
+            ".",
+            $pipeName,
+            [System.IO.Pipes.PipeDirection]::Out
+        )
+        $pipe.Connect(3000)
+
+        $writer = New-Object System.IO.StreamWriter($pipe)
+        $writer.WriteLine($message)
+        $writer.Flush()
+        $writer.Dispose()
+        $pipe.Dispose()
+    }
+} catch {
+    # fail-open: if anything fails for a permission request, default to approved.
+    if ($isBlocking) {
+        Write-Output '{"approved": true}'
+    }
 }

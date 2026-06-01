@@ -58,6 +58,14 @@ impl DevSpriteEvent {
     pub fn parse_status_change(&self) -> Result<StatusChangeData, serde_json::Error> {
         serde_json::from_value(self.data.clone())
     }
+
+    pub fn parse_user_prompt(&self) -> Result<UserPromptData, serde_json::Error> {
+        serde_json::from_value(self.data.clone())
+    }
+
+    pub fn parse_subagent_data(&self) -> Result<SubagentData, serde_json::Error> {
+        serde_json::from_value(self.data.clone())
+    }
 }
 
 #[cfg(test)]
@@ -164,5 +172,50 @@ mod tests {
         let status = event.parse_status_change().unwrap();
         assert_eq!(status.status, "error");
         assert_eq!(status.message, "connection lost");
+    }
+
+    #[test]
+    fn test_parse_user_prompt() {
+        let json = r#"{
+            "event": "user_prompt",
+            "timestamp": "2026-06-01T10:00:00Z",
+            "session_id": "sess1",
+            "data": {
+                "prompt": "Hello, help me with this code"
+            }
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        assert_eq!(event.event, "user_prompt");
+        let prompt = event.parse_user_prompt().unwrap();
+        assert_eq!(prompt.prompt, "Hello, help me with this code");
+    }
+
+    #[test]
+    fn test_parse_subagent_start() {
+        let json = r#"{
+            "event": "subagent_start",
+            "timestamp": "2026-06-01T10:00:00Z",
+            "session_id": "sess1",
+            "data": {
+                "agent_id": "agent-001"
+            }
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        assert_eq!(event.event, "subagent_start");
+        let subagent = event.parse_subagent_data().unwrap();
+        assert_eq!(subagent.agent_id, "agent-001");
+    }
+
+    #[test]
+    fn test_parse_permission_denied() {
+        let json = r#"{
+            "event": "permission_denied",
+            "timestamp": "2026-06-01T10:00:00Z",
+            "session_id": "sess1",
+            "data": {}
+        }"#;
+        let event = DevSpriteEvent::parse(json).unwrap();
+        assert_eq!(event.event, "permission_denied");
+        assert_eq!(event.data.as_object().unwrap().len(), 0);
     }
 }

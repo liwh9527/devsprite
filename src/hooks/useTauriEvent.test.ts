@@ -234,6 +234,76 @@ describe("useTauriEvent", () => {
     expect(useAppStore.getState().sessions.get("sess1")!.status).toBe("active");
   });
 
+  it("should add chat message and set status on user_prompt event", () => {
+    renderHook(() => useTauriEvent());
+
+    act(() => {
+      devSpriteCallback({
+        payload: {
+          event: "user_prompt",
+          session_id: "sess1",
+          data: {
+            prompt: "Help me debug this code",
+          },
+        },
+      });
+    });
+
+    const state = useAppStore.getState();
+    expect(state.sessions.get("sess1")!.status).toBe("active");
+    expect(state.sessions.get("sess1")!.chatMessages).toHaveLength(1);
+    expect(state.sessions.get("sess1")!.chatMessages[0].role).toBe("user");
+    expect(state.sessions.get("sess1")!.chatMessages[0].content).toBe("Help me debug this code");
+  });
+
+  it("should set status to working on subagent_start event", () => {
+    renderHook(() => useTauriEvent());
+
+    act(() => {
+      devSpriteCallback({
+        payload: {
+          event: "subagent_start",
+          session_id: "sess1",
+          data: { agent_id: "agent-001" },
+        },
+      });
+    });
+
+    expect(useAppStore.getState().sessions.get("sess1")!.status).toBe("working");
+  });
+
+  it("should set status to active on subagent_stop event", () => {
+    renderHook(() => useTauriEvent());
+
+    act(() => {
+      devSpriteCallback({
+        payload: {
+          event: "subagent_stop",
+          session_id: "sess1",
+          data: { agent_id: "agent-001" },
+        },
+      });
+    });
+
+    expect(useAppStore.getState().sessions.get("sess1")!.status).toBe("active");
+  });
+
+  it("should set status to active on permission_denied event", () => {
+    renderHook(() => useTauriEvent());
+
+    act(() => {
+      devSpriteCallback({
+        payload: {
+          event: "permission_denied",
+          session_id: "sess1",
+          data: {},
+        },
+      });
+    });
+
+    expect(useAppStore.getState().sessions.get("sess1")!.status).toBe("active");
+  });
+
   it("should reload settings on settings-changed event", async () => {
     renderHook(() => useTauriEvent());
 
