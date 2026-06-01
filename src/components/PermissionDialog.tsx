@@ -1,14 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { PermissionRequest } from "../types";
 import { useAppStore } from "../stores/appStore";
 
 interface PermissionDialogProps {
   request: PermissionRequest;
+  timeout?: number;
 }
 
-export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request }) => {
+export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, timeout = 30 }) => {
   const { respondToPermission } = useAppStore();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [remaining, setRemaining] = useState(timeout);
+
+  useEffect(() => {
+    const elapsed = Math.floor((Date.now() - request.timestamp) / 1000);
+    setRemaining(Math.max(0, timeout - elapsed));
+
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - request.timestamp) / 1000);
+      setRemaining(Math.max(0, timeout - elapsed));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [request.timestamp, timeout]);
 
   const handleApprove = async () => {
     setIsLoading(true);
@@ -45,6 +59,17 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request }) =
             <span className="font-semibold">原因:</span> {request.reason}
           </p>
         )}
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[9px] text-yellow-500">
+            {remaining > 0 ? `${remaining}s 后自动拒绝` : "已超时"}
+          </span>
+          <div className="w-16 h-1 bg-yellow-200 rounded overflow-hidden">
+            <div
+              className="h-full bg-yellow-500 transition-all duration-1000"
+              style={{ width: `${(remaining / timeout) * 100}%` }}
+            />
+          </div>
+        </div>
         <div className="flex gap-1.5">
           <button
             onClick={handleApprove}
