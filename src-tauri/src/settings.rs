@@ -22,7 +22,7 @@ impl Default for WindowSettings {
             y: 100,
             visible: true,
             width: 220,
-            height: 580,
+            height: 400,
         }
     }
 }
@@ -356,7 +356,7 @@ mod tests {
         assert_eq!(settings.window.y, 100);
         assert_eq!(settings.window.visible, true);
         assert_eq!(settings.window.width, 220);
-        assert_eq!(settings.window.height, 580);
+        assert_eq!(settings.window.height, 400);
 
         // PipeSettings
         assert_eq!(settings.pipe.name, "devsprite");

@@ -16,7 +16,7 @@ pub fn create_tray(app: &App) -> tauri::Result<()> {
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
 
     // Store a clone for later use by update_tray_status
-    let _ = STATUS_ITEM.set(status_item.clone());
+    STATUS_ITEM.set(status_item.clone()).unwrap_or_else(|_| panic!("STATUS_ITEM already initialized"));
 
     // Build menu
     let menu = Menu::with_items(app, &[&show_hide, &status_item, &quit])?;
@@ -68,11 +68,11 @@ fn get_status_label(status: &str) -> &str {
     }
 }
 
-pub fn update_tray_status(_app: &App, status: &str) -> tauri::Result<()> {
+pub fn update_tray_status(status: &str) -> tauri::Result<()> {
     let status_label = get_status_label(status);
-    if let Some(item) = STATUS_ITEM.get() {
-        let _ = item.set_text(format!("状态: {}", status_label));
-    }
+    let item = STATUS_ITEM.get()
+        .ok_or_else(|| tauri::Error::from(std::io::Error::new(std::io::ErrorKind::Other, "Tray not initialized")))?;
+    item.set_text(format!("状态: {}", status_label));
     log::info!("Tray status updated: {}", status_label);
     Ok(())
 }

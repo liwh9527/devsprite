@@ -24,30 +24,30 @@ describe("Mascot", () => {
   it("should apply mascot-idle animation class when status is idle", () => {
     render(<Mascot status="idle" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("mascot-idle");
+    expect(img.parentElement?.className).toContain("mascot-idle");
   });
 
   it("should apply mascot-active animation class when status is active", () => {
     render(<Mascot status="active" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("mascot-active");
+    expect(img.parentElement?.className).toContain("mascot-active");
   });
 
   it("should apply mascot-waiting animation class when status is waiting", () => {
     render(<Mascot status="waiting" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("mascot-waiting");
+    expect(img.parentElement?.className).toContain("mascot-waiting");
   });
 
   it("should apply mascot-working animation class when status is working", () => {
     render(<Mascot status="working" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("mascot-working");
+    expect(img.parentElement?.className).toContain("mascot-working");
   });
 
   it("should apply mascot-error animation class when status is error", () => {
     render(<Mascot status="error" />);
     const img = screen.getByAltText("DevSprite mascot");
-    expect(img.className).toContain("mascot-error");
+    expect(img.parentElement?.className).toContain("mascot-error");
   });
 });
