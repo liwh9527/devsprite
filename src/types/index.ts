@@ -6,6 +6,7 @@ export interface ToolCall {
   target: string;
   status: "pending" | "completed" | "failed";
   timestamp: number;
+  sessionId: string;
 }
 
 export interface PermissionRequest {
@@ -14,6 +15,7 @@ export interface PermissionRequest {
   target: string;
   reason: string;
   timestamp: number;
+  sessionId: string;
 }
 
 export interface PermissionResponse {

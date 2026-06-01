@@ -42,6 +42,7 @@ export function useTauriEvent() {
             target: toolData.file_path,
             status: toolData.status as "pending" | "completed" | "failed",
             timestamp: Date.now(),
+            sessionId: session_id,
           });
           setStatus("working", `正在执行 ${toolData.tool_name}`);
           break;
@@ -56,6 +57,7 @@ export function useTauriEvent() {
             target: permData.target,
             reason: permData.reason,
             timestamp: Date.now(),
+            sessionId: session_id,
           });
           startPermissionTimeout(requestId);
           setStatus("waiting", "等待权限批准");
