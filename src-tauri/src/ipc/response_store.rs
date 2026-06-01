@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PermissionResponse {
     pub request_id: String,
+    pub session_id: String,
     pub approved: bool,
     pub timestamp: i64,
 }
@@ -94,6 +95,7 @@ mod tests {
         let store = create_test_store();
         let response = PermissionResponse {
             request_id: "req1".to_string(),
+            session_id: "sess1".to_string(),
             approved: true,
             timestamp: 1000,
         };
@@ -113,11 +115,13 @@ mod tests {
 
         store.store_response(PermissionResponse {
             request_id: "req1".to_string(),
+            session_id: "sess1".to_string(),
             approved: true,
             timestamp: 1000,
         }).unwrap();
         store.store_response(PermissionResponse {
             request_id: "req2".to_string(),
+            session_id: "sess1".to_string(),
             approved: false,
             timestamp: 2000,
         }).unwrap();
@@ -131,11 +135,13 @@ mod tests {
         let store = create_test_store();
         store.store_response(PermissionResponse {
             request_id: "req1".to_string(),
+            session_id: "sess1".to_string(),
             approved: true,
             timestamp: 1000,
         }).unwrap();
         store.store_response(PermissionResponse {
             request_id: "req2".to_string(),
+            session_id: "sess1".to_string(),
             approved: false,
             timestamp: 2000,
         }).unwrap();
@@ -152,6 +158,7 @@ mod tests {
         let store = create_test_store();
         store.store_response(PermissionResponse {
             request_id: "req1".to_string(),
+            session_id: "sess1".to_string(),
             approved: true,
             timestamp: 1000,
         }).unwrap();

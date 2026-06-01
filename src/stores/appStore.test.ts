@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useAppStore } from "./appStore";
+import { useAppStore, getActiveSession } from "./appStore";
 import type { ToolCall, PermissionRequest } from "../types";
 
 // Mock @tauri-apps/api/core
@@ -11,65 +11,110 @@ import { invoke } from "@tauri-apps/api/core";
 
 const mockInvoke = invoke as ReturnType<typeof vi.fn>;
 
+const defaultSettings = {
+  window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
+  pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
+  theme: {
+    primary_color: "#667eea",
+    primary_dark_color: "#764ba2",
+    panel_width: 200,
+    panel_background_opacity: 0.95,
+    panel_border_radius: 12,
+  },
+  behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
+};
+
 describe("useAppStore", () => {
   beforeEach(() => {
-    // Reset store to initial state
     useAppStore.setState({
-      status: "idle",
-      statusMessage: "",
-      sessionId: null,
-      toolCalls: [],
-      permissionRequests: [],
-      isWidgetVisible: true,
+      sessions: new Map(),
+      activeSessionId: null,
       pendingResponses: [],
-      settings: {
-        window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
-        pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
-        theme: {
-          primary_color: "#667eea",
-          primary_dark_color: "#764ba2",
-          panel_width: 200,
-          panel_background_opacity: 0.95,
-          panel_border_radius: 12,
-        },
-        behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
-      },
+      settings: defaultSettings,
     });
     vi.clearAllMocks();
   });
 
   it("should have correct initial state", () => {
     const state = useAppStore.getState();
-    expect(state.status).toBe("idle");
-    expect(state.statusMessage).toBe("");
-    expect(state.sessionId).toBeNull();
-    expect(state.toolCalls).toEqual([]);
-    expect(state.permissionRequests).toEqual([]);
-    expect(state.isWidgetVisible).toBe(true);
+    expect(state.sessions.size).toBe(0);
+    expect(state.activeSessionId).toBeNull();
     expect(state.pendingResponses).toEqual([]);
   });
 
-  it("should update status with setStatus", () => {
-    useAppStore.getState().setStatus("working", "执行中");
+  it("should create session on ensureSession", () => {
+    useAppStore.getState().ensureSession("sess1");
     const state = useAppStore.getState();
-    expect(state.status).toBe("working");
-    expect(state.statusMessage).toBe("执行中");
+    expect(state.sessions.has("sess1")).toBe(true);
+    const session = state.sessions.get("sess1")!;
+    expect(session.status).toBe("idle");
+    expect(session.toolCalls).toEqual([]);
+    expect(session.permissionRequests).toEqual([]);
+  });
+
+  it("should not overwrite existing session on ensureSession", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+    useAppStore.getState().setStatus("active", "hello");
+    useAppStore.getState().ensureSession("sess1");
+    const session = useAppStore.getState().sessions.get("sess1")!;
+    expect(session.status).toBe("active");
+    expect(session.statusMessage).toBe("hello");
+  });
+
+  it("should set active session", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+    expect(useAppStore.getState().activeSessionId).toBe("sess1");
+  });
+
+  it("should update status on active session", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+    useAppStore.getState().setStatus("working", "执行中");
+    const session = useAppStore.getState().sessions.get("sess1")!;
+    expect(session.status).toBe("working");
+    expect(session.statusMessage).toBe("执行中");
+  });
+
+  it("should not update status if no active session", () => {
+    useAppStore.getState().setStatus("working", "no session");
+    expect(useAppStore.getState().sessions.size).toBe(0);
   });
 
   it("should add tool call with addToolCall", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     const toolCall: ToolCall = {
       id: "1",
       toolName: "Read",
       target: "/path/to/file.rs",
       status: "completed",
       timestamp: Date.now(),
+      sessionId: "sess1",
     };
     useAppStore.getState().addToolCall(toolCall);
-    expect(useAppStore.getState().toolCalls).toHaveLength(1);
-    expect(useAppStore.getState().toolCalls[0].toolName).toBe("Read");
+    const session = useAppStore.getState().sessions.get("sess1")!;
+    expect(session.toolCalls).toHaveLength(1);
+    expect(session.toolCalls[0].toolName).toBe("Read");
+  });
+
+  it("should route tool call by sessionId field", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().ensureSession("sess2");
+    useAppStore.getState().setActiveSession("sess1");
+
+    useAppStore.getState().addToolCall({
+      id: "1", toolName: "A", target: "/a", status: "completed", timestamp: Date.now(), sessionId: "sess2",
+    });
+
+    expect(useAppStore.getState().sessions.get("sess1")!.toolCalls).toHaveLength(0);
+    expect(useAppStore.getState().sessions.get("sess2")!.toolCalls).toHaveLength(1);
   });
 
   it("should limit tool calls to 5", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     for (let i = 0; i < 8; i++) {
       useAppStore.getState().addToolCall({
         id: String(i),
@@ -77,53 +122,54 @@ describe("useAppStore", () => {
         target: `/path/${i}`,
         status: "completed",
         timestamp: Date.now(),
+        sessionId: "sess1",
       });
     }
-    expect(useAppStore.getState().toolCalls).toHaveLength(5);
+    expect(useAppStore.getState().sessions.get("sess1")!.toolCalls).toHaveLength(5);
   });
 
   it("should clear tool calls", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     useAppStore.getState().addToolCall({
-      id: "1",
-      toolName: "Read",
-      target: "/path",
-      status: "completed",
-      timestamp: Date.now(),
+      id: "1", toolName: "Read", target: "/path", status: "completed", timestamp: Date.now(), sessionId: "sess1",
     });
     useAppStore.getState().clearToolCalls();
-    expect(useAppStore.getState().toolCalls).toEqual([]);
+    expect(useAppStore.getState().sessions.get("sess1")!.toolCalls).toEqual([]);
   });
 
   it("should add permission request", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     const request: PermissionRequest = {
       id: "p1",
       operation: "Read",
       target: "/secret/file",
       reason: "Needs access",
       timestamp: Date.now(),
+      sessionId: "sess1",
     };
     useAppStore.getState().addPermissionRequest(request);
-    expect(useAppStore.getState().permissionRequests).toHaveLength(1);
+    expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(1);
   });
 
   it("should respond to permission with approval", async () => {
     mockInvoke.mockResolvedValue(undefined);
 
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     useAppStore.getState().addPermissionRequest({
-      id: "p1",
-      operation: "Read",
-      target: "/file",
-      reason: "access",
-      timestamp: Date.now(),
+      id: "p1", operation: "Read", target: "/file", reason: "access", timestamp: Date.now(), sessionId: "sess1",
     });
 
     await useAppStore.getState().respondToPermission("p1", true);
 
     expect(mockInvoke).toHaveBeenCalledWith("respond_permission", {
       requestId: "p1",
+      sessionId: "sess1",
       approved: true,
     });
-    expect(useAppStore.getState().permissionRequests).toHaveLength(0);
+    expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(0);
     expect(useAppStore.getState().pendingResponses).toHaveLength(1);
     expect(useAppStore.getState().pendingResponses[0].approved).toBe(true);
   });
@@ -131,18 +177,17 @@ describe("useAppStore", () => {
   it("should respond to permission with rejection", async () => {
     mockInvoke.mockResolvedValue(undefined);
 
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     useAppStore.getState().addPermissionRequest({
-      id: "p2",
-      operation: "Write",
-      target: "/file",
-      reason: "access",
-      timestamp: Date.now(),
+      id: "p2", operation: "Write", target: "/file", reason: "access", timestamp: Date.now(), sessionId: "sess1",
     });
 
     await useAppStore.getState().respondToPermission("p2", false);
 
     expect(mockInvoke).toHaveBeenCalledWith("respond_permission", {
       requestId: "p2",
+      sessionId: "sess1",
       approved: false,
     });
     expect(useAppStore.getState().pendingResponses[0].approved).toBe(false);
@@ -152,27 +197,17 @@ describe("useAppStore", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockInvoke.mockRejectedValue(new Error("IPC failed"));
 
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
     useAppStore.getState().addPermissionRequest({
-      id: "p3",
-      operation: "Bash",
-      target: "/cmd",
-      reason: "run",
-      timestamp: Date.now(),
+      id: "p3", operation: "Bash", target: "/cmd", reason: "run", timestamp: Date.now(), sessionId: "sess1",
     });
 
     await useAppStore.getState().respondToPermission("p3", true);
 
-    expect(useAppStore.getState().permissionRequests).toHaveLength(1);
+    expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(1);
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
-  });
-
-  it("should toggle widget visibility", () => {
-    expect(useAppStore.getState().isWidgetVisible).toBe(true);
-    useAppStore.getState().toggleWidget();
-    expect(useAppStore.getState().isWidgetVisible).toBe(false);
-    useAppStore.getState().toggleWidget();
-    expect(useAppStore.getState().isWidgetVisible).toBe(true);
   });
 
   it("should load settings", async () => {
@@ -186,7 +221,7 @@ describe("useAppStore", () => {
         panel_background_opacity: 0.95,
         panel_border_radius: 12,
       },
-      behavior: { max_tool_calls: 5, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+      behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
     };
     mockInvoke.mockResolvedValue(mockSettings);
 
@@ -214,7 +249,7 @@ describe("useAppStore", () => {
         panel_background_opacity: 0.9,
         panel_border_radius: 16,
       },
-      behavior: { max_tool_calls: 8, permission_timeout: 30, mascot_path: null, hotkey: "Ctrl+Shift+D" },
+      behavior: { max_tool_calls: 8, permission_timeout: 30, hotkey: "Ctrl+Shift+D" },
     };
     mockInvoke.mockResolvedValue(undefined);
 
@@ -262,6 +297,9 @@ describe("useAppStore", () => {
       },
     });
 
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+
     for (let i = 0; i < 10; i++) {
       useAppStore.getState().addToolCall({
         id: String(i),
@@ -269,51 +307,88 @@ describe("useAppStore", () => {
         target: `/path/${i}`,
         status: "completed",
         timestamp: Date.now(),
+        sessionId: "sess1",
       });
     }
-    expect(useAppStore.getState().toolCalls).toHaveLength(8);
+    expect(useAppStore.getState().sessions.get("sess1")!.toolCalls).toHaveLength(8);
   });
 
   it("should auto-deny permission request after timeout", async () => {
     vi.useFakeTimers();
-    const { addPermissionRequest, startPermissionTimeout } = useAppStore.getState();
 
-    addPermissionRequest({
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+
+    useAppStore.getState().addPermissionRequest({
       id: "perm-timeout-test",
       operation: "Read",
       target: "/file",
       reason: "test",
       timestamp: Date.now(),
+      sessionId: "sess1",
     });
-    startPermissionTimeout("perm-timeout-test");
+    useAppStore.getState().startPermissionTimeout("perm-timeout-test");
 
-    expect(useAppStore.getState().permissionRequests).toHaveLength(1);
+    expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(1);
 
     await vi.advanceTimersByTimeAsync(30000);
 
-    expect(useAppStore.getState().permissionRequests).toHaveLength(0);
+    expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(0);
     vi.useRealTimers();
   });
 
   it("should cancel timeout when permission is manually responded", async () => {
     vi.useFakeTimers();
-    const { addPermissionRequest, startPermissionTimeout } = useAppStore.getState();
 
-    addPermissionRequest({
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+
+    useAppStore.getState().addPermissionRequest({
       id: "perm-cancel-test",
       operation: "Write",
       target: "/file",
       reason: "test",
       timestamp: Date.now(),
+      sessionId: "sess1",
     });
-    startPermissionTimeout("perm-cancel-test");
+    useAppStore.getState().startPermissionTimeout("perm-cancel-test");
 
     mockInvoke.mockResolvedValue(undefined);
     await useAppStore.getState().respondToPermission("perm-cancel-test", true);
 
     await vi.advanceTimersByTimeAsync(30000);
 
-    expect(useAppStore.getState().permissionRequests).toHaveLength(0);
+    expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(0);
     vi.useRealTimers();
+  });
+
+  it("should isolate sessions - tool calls in one session do not affect another", () => {
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().ensureSession("sess2");
+    useAppStore.getState().setActiveSession("sess1");
+
+    useAppStore.getState().addToolCall({
+      id: "1", toolName: "A", target: "/a", status: "completed", timestamp: Date.now(), sessionId: "sess1",
+    });
+    useAppStore.getState().setActiveSession("sess2");
+    useAppStore.getState().addToolCall({
+      id: "2", toolName: "B", target: "/b", status: "completed", timestamp: Date.now(), sessionId: "sess2",
+    });
+
+    expect(useAppStore.getState().sessions.get("sess1")!.toolCalls).toHaveLength(1);
+    expect(useAppStore.getState().sessions.get("sess1")!.toolCalls[0].toolName).toBe("A");
+    expect(useAppStore.getState().sessions.get("sess2")!.toolCalls).toHaveLength(1);
+    expect(useAppStore.getState().sessions.get("sess2")!.toolCalls[0].toolName).toBe("B");
+  });
+
+  it("getActiveSession helper should return active session or undefined", () => {
+    const state1 = useAppStore.getState();
+    expect(getActiveSession(state1)).toBeUndefined();
+
+    useAppStore.getState().ensureSession("sess1");
+    useAppStore.getState().setActiveSession("sess1");
+    const state2 = useAppStore.getState();
+    expect(getActiveSession(state2)).toBeDefined();
+    expect(getActiveSession(state2)!.sessionId).toBe("sess1");
   });
 });

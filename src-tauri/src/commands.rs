@@ -70,11 +70,13 @@ pub fn toggle_widget(state: tauri::State<'_, Arc<Mutex<AppState>>>) -> bool {
 #[command]
 pub fn respond_permission(
     request_id: String,
+    session_id: String,
     approved: bool,
     store: tauri::State<'_, Arc<ResponseStore>>,
 ) -> Result<(), String> {
     let response = PermissionResponse {
         request_id: request_id.clone(),
+        session_id: session_id.clone(),
         approved,
         timestamp: chrono::Utc::now().timestamp(),
     };

@@ -20,6 +20,7 @@ export interface PermissionRequest {
 
 export interface PermissionResponse {
   requestId: string;
+  sessionId: string;
   approved: boolean;
   timestamp: number;
 }
@@ -55,13 +56,18 @@ export interface StatusChangeData {
   message: string;
 }
 
-export interface AppState {
+export interface SessionState {
+  sessionId: string;
   status: SpriteStatus;
   statusMessage: string;
-  sessionId: string | null;
   toolCalls: ToolCall[];
   permissionRequests: PermissionRequest[];
-  isWidgetVisible: boolean;
+  lastActive: number;
+}
+
+export interface AppState {
+  sessions: Map<string, SessionState>;
+  activeSessionId: string | null;
   pendingResponses: PermissionResponse[];
 }
 
@@ -91,7 +97,6 @@ export interface ThemeSettings {
 export interface BehaviorSettings {
   max_tool_calls: number;
   permission_timeout: number;
-  mascot_path: string | null;
   hotkey: string;
 }
 

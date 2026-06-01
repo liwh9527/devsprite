@@ -71,7 +71,6 @@ impl Default for ThemeSettings {
 pub struct BehaviorSettings {
     pub max_tool_calls: u32,
     pub permission_timeout: u32,
-    pub mascot_path: Option<String>,
     pub hotkey: String,
 }
 
@@ -80,7 +79,6 @@ impl Default for BehaviorSettings {
         Self {
             max_tool_calls: 5,
             permission_timeout: 30,
-            mascot_path: None,
             hotkey: "Ctrl+Shift+D".to_string(),
         }
     }
@@ -358,7 +356,6 @@ mod tests {
         // BehaviorSettings
         assert_eq!(settings.behavior.max_tool_calls, 5);
         assert_eq!(settings.behavior.permission_timeout, 30);
-        assert_eq!(settings.behavior.mascot_path, None);
     }
 
     #[test]
@@ -500,7 +497,6 @@ mod tests {
             behavior: BehaviorSettings {
                 max_tool_calls: 7,
                 permission_timeout: 45,
-                mascot_path: Some("/path/to/mascot".to_string()),
                 hotkey: "Ctrl+Shift+D".to_string(),
             },
         };
@@ -526,10 +522,6 @@ mod tests {
 
         assert_eq!(deserialized.behavior.max_tool_calls, 7);
         assert_eq!(deserialized.behavior.permission_timeout, 45);
-        assert_eq!(
-            deserialized.behavior.mascot_path,
-            Some("/path/to/mascot".to_string())
-        );
     }
 
     #[test]
