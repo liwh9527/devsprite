@@ -152,6 +152,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const timer = setTimeout(() => {
       get().respondToPermission(requestId, false);
       permissionTimers.delete(requestId);
+      set({ statusMessage: "权限请求已超时自动拒绝" });
       console.log(`Permission request ${requestId} auto-denied after ${timeout}ms`);
     }, timeout);
 
