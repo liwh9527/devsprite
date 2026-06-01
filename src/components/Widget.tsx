@@ -44,7 +44,12 @@ export const Widget: React.FC = () => {
 
       {/* The panel - appears on hover */}
       <div className="pet-panel" onMouseDown={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-primary to-primary-dark px-4 py-2 text-center rounded-t-xl">
+        <div
+          className="px-4 py-2 text-center rounded-t-xl"
+          style={{
+            background: `linear-gradient(to right, var(--color-primary), var(--color-primary-dark))`,
+          }}
+        >
           <h1 className="text-white font-bold text-sm">DevSprite</h1>
         </div>
 

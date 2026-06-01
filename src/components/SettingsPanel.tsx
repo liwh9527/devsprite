@@ -219,7 +219,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="text-xs px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary to-primary-dark text-white disabled:opacity-50"
+            className="text-xs px-3 py-1.5 rounded-lg text-white disabled:opacity-50"
+            style={{
+              background: `linear-gradient(to right, var(--color-primary), var(--color-primary-dark))`,
+            }}
           >
             {saving ? "保存中..." : "保存"}
           </button>
