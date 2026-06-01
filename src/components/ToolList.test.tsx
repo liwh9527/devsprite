@@ -19,7 +19,7 @@ describe("ToolList", () => {
     expect(screen.getByText("Grep")).toBeInTheDocument();
   });
 
-  it("should render at most 5 tool calls", () => {
+  it("should render at most 5 tool calls by default", () => {
     const toolCalls: ToolCall[] = Array.from({ length: 8 }, (_, i) => ({
       id: String(i),
       toolName: `Tool${i}`,
@@ -31,5 +31,19 @@ describe("ToolList", () => {
     expect(screen.getByText("Tool0")).toBeInTheDocument();
     expect(screen.getByText("Tool4")).toBeInTheDocument();
     expect(screen.queryByText("Tool5")).toBeNull();
+  });
+
+  it("should respect maxToolCalls prop", () => {
+    const toolCalls: ToolCall[] = Array.from({ length: 8 }, (_, i) => ({
+      id: String(i),
+      toolName: `Tool${i}`,
+      target: `/path/${i}`,
+      status: "completed" as const,
+      timestamp: Date.now() - i * 1000,
+    }));
+    render(<ToolList toolCalls={toolCalls} maxToolCalls={3} />);
+    expect(screen.getByText("Tool0")).toBeInTheDocument();
+    expect(screen.getByText("Tool2")).toBeInTheDocument();
+    expect(screen.queryByText("Tool3")).toBeNull();
   });
 });

@@ -18,6 +18,7 @@ export const Widget: React.FC = () => {
     statusMessage,
     toolCalls,
     permissionRequests,
+    settings,
     loadSettings,
   } = useAppStore();
 
@@ -55,7 +56,7 @@ export const Widget: React.FC = () => {
 
         <StatusCard status={status} message={statusMessage} />
 
-        <ToolList toolCalls={toolCalls} />
+        <ToolList toolCalls={toolCalls} maxToolCalls={settings.behavior.max_tool_calls} />
 
         {currentPermission && (
           <PermissionDialog request={currentPermission} />

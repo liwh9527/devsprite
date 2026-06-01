@@ -3,6 +3,7 @@ import type { ToolCall } from "../types";
 
 interface ToolListProps {
   toolCalls: ToolCall[];
+  maxToolCalls?: number;
 }
 
 const toolIcons: Record<string, string> = {
@@ -21,7 +22,7 @@ function formatTime(timestamp: number): string {
   return `${minutes}m`;
 }
 
-export const ToolList: React.FC<ToolListProps> = ({ toolCalls }) => {
+export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5 }) => {
   if (toolCalls.length === 0) {
     return (
       <div className="px-3 py-2">
@@ -35,7 +36,7 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls }) => {
   return (
     <div className="px-3 py-1">
       <div className="space-y-0.5">
-        {toolCalls.slice(0, 5).map((call) => (
+        {toolCalls.slice(0, maxToolCalls).map((call) => (
           <div
             key={call.id}
             className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
