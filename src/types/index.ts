@@ -6,6 +6,13 @@ export interface ToolCall {
   target: string;
   status: "pending" | "completed" | "failed";
   timestamp: number;
+  detail?: string;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
 }
 
 export interface PermissionRequest {
