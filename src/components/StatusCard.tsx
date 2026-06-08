@@ -30,9 +30,13 @@ export const StatusCard: React.FC<StatusCardProps> = ({ status, message, connect
         <span className="font-medium text-gray-800 text-xs">
           {config.label}{status !== "idle" && "..."}
         </span>
+        {connectionStatus === "connected" && (
+          <span className="w-1.5 h-1.5 bg-green-400 rounded-full shrink-0 ml-auto" title="已连接" />
+        )}
         {connectionStatus === "disconnected" && (
-          <span className="text-[9px] text-red-400 ml-auto" title="Claude Code 连接已断开">
-            ⚠ 断开
+          <span className="text-[9px] text-red-400 ml-auto flex items-center gap-1" title="Claude Code 连接已断开">
+            <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+            断开
           </span>
         )}
       </div>
