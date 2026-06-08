@@ -8,7 +8,7 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
-  --panel-width: 200px;
+  --panel-width: 260px;
   --panel-opacity: 0.95;
   --panel-border-radius: 12px;
 }
@@ -75,6 +75,9 @@ body {
   transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
   pointer-events: none;
   overflow: hidden;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 100;
 }
 
@@ -91,7 +94,23 @@ body {
    Mascot status animations - enhanced
    ============================================ */
 
+/* Custom thin scrollbar for panel */
+.pet-panel::-webkit-scrollbar {
+  width: 3px;
+}
+
+.pet-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* --- Idle: gentle breathing float with glow --- */
+
+.pet-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+/* Mascot status animations */
 .mascot-idle {
   animation:
     mascot-idle-float 3s ease-in-out infinite,
@@ -352,4 +371,17 @@ body {
 
 .pin-active {
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
+
+/* ============================================
+   Tool item animation
+   ============================================ */
+
+.tool-item-enter {
+  animation: slide-in-up 0.2s ease-out;
+}
+
+@keyframes slide-in-up {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
