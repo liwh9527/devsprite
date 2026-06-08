@@ -87,14 +87,6 @@ body {
   pointer-events: auto;
 }
 
-/* Show panel when pinned */
-.pet-container.pinned .pet-panel {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
 /* ============================================
    Mascot status animations - enhanced
    ============================================ */

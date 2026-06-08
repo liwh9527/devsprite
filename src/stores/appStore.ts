@@ -304,7 +304,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   clearAllPermissionTimeouts: () => {
-    for (const [id, timer] of permissionTimers) {
+    for (const timer of permissionTimers.values()) {
       clearTimeout(timer);
     }
     permissionTimers.clear();

@@ -297,9 +297,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             {saving ? "保存中..." : "保存"}
           </button>
         </div>
-        {error && (
-          <p className="text-[10px] text-red-500 px-4 pb-2">{error}</p>
-        )}
       </div>
     </div>
   );
