@@ -8,7 +8,7 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
-  --panel-width: 200px;
+  --panel-width: 260px;
   --panel-opacity: 0.95;
   --panel-border-radius: 12px;
 }
@@ -75,6 +75,9 @@ body {
   transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
   pointer-events: none;
   overflow: hidden;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 100;
 }
 
@@ -84,6 +87,20 @@ body {
   visibility: visible;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+/* Custom thin scrollbar for panel */
+.pet-panel::-webkit-scrollbar {
+  width: 3px;
+}
+
+.pet-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pet-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
 }
 
 /* Mascot status animations */
@@ -152,4 +169,37 @@ body {
 @keyframes scale-in {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* New entry slide-in animation */
+.tool-item-enter {
+  animation: slide-in-up 0.2s ease-out;
+}
+
+@keyframes slide-in-up {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Section title style */
+.section-title {
+  font-size: 9px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 12px 2px;
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 2px 0;
+}
+
+/* Pin button active/locked state */
+.pin-active {
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 4px;
+  padding: 2px 4px;
 }
