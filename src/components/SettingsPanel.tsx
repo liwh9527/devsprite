@@ -50,6 +50,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   };
 
   const handleReset = () => {
+    if (!window.confirm("确定要恢复默认设置吗？所有自定义配置将丢失。")) {
+      return;
+    }
     const defaults: Settings = {
       window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
       pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },

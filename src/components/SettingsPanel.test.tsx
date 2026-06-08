@@ -53,6 +53,8 @@ describe("SettingsPanel", () => {
   });
 
   it("should reset to defaults when reset button clicked", () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
     render(<SettingsPanel onClose={mockOnClose} />);
 
     const sliders = screen.getAllByRole("slider");
