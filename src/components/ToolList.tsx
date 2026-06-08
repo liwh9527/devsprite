@@ -23,7 +23,14 @@ const statusColors: Record<string, string> = {
   failed: "text-red-500",
 };
 
+const statusBg: Record<string, string> = {
+  pending: "bg-yellow-50",
+  completed: "",
+  failed: "bg-red-50",
+};
+
 export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5, onClear }) => {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [, setTick] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 15000);
@@ -56,7 +63,7 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5,
         {toolCalls.slice(0, maxToolCalls).map((call) => (
           <div
             key={call.id}
-            className="flex flex-col py-1 px-1.5 rounded hover:bg-gray-50 transition-colors"
+            className={`tool-item-enter flex flex-col py-1 px-1.5 rounded transition-colors ${statusBg[call.status] || "hover:bg-gray-50"}`}
           >
             <div className="flex items-center gap-1.5">
               <span className={`text-xs shrink-0 ${statusColors[call.status] || ""}`}>
@@ -68,14 +75,29 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5,
               <span className="text-xs font-medium text-gray-800 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                 {call.toolName}
               </span>
+              {call.target && (
+                <span className="text-[9px] text-gray-400 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap max-w-[100px]">
+                  {call.target.split("/").pop()}
+                </span>
+              )}
               <span className="text-[10px] text-gray-500 shrink-0 ml-auto">
                 {formatTime(call.timestamp)}
               </span>
             </div>
             {call.detail && (
-              <span className="text-[9px] text-gray-400 truncate w-full pl-5" title={call.detail}>
-                {call.detail.length > 30 ? call.detail.slice(0, 30) + "..." : call.detail}
-              </span>
+              <button
+                onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}
+                className="text-[9px] text-gray-400 text-left w-full pl-5 mt-0.5 hover:text-gray-600 transition-colors"
+              >
+                {expandedId === call.id ? (
+                  <span className="break-words whitespace-pre-wrap">{call.detail}</span>
+                ) : (
+                  <span className="truncate block">
+                    {call.detail.length > 40 ? call.detail.slice(0, 40) + "..." : call.detail}
+                    {call.detail.length > 40 && <span className="text-gray-300 ml-1">▼</span>}
+                  </span>
+                )}
+              </button>
             )}
           </div>
         ))}
