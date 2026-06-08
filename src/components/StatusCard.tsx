@@ -27,7 +27,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ status, message }) => {
           className={`w-2 h-2 rounded-full ${config.color} animate-pulse-slow`}
         />
         <span className="font-medium text-gray-800 text-xs">
-          {config.label}...
+          {config.label}{status !== "idle" && "..."}
         </span>
       </div>
       {message && (

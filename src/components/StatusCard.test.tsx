@@ -5,7 +5,7 @@ import { StatusCard } from "./StatusCard";
 describe("StatusCard", () => {
   it("should display idle label", () => {
     render(<StatusCard status="idle" message="" />);
-    expect(screen.getByText("空闲...")).toBeInTheDocument();
+    expect(screen.getByText("空闲")).toBeInTheDocument();
   });
 
   it("should display working label", () => {
