@@ -25,7 +25,7 @@ interface AppStore extends AppState {
   setWidgetVisible: (visible: boolean) => void;
   toggleWidget: () => void;
   loadSettings: () => Promise<void>;
-  updateSettings: (settings: Settings) => Promise<void>;
+  updateSettings: (settings: Settings) => Promise<{ success: boolean; error?: string }>;
   applyTheme: (theme: ThemeSettings) => void;
   startPermissionTimeout: (requestId: string) => void;
   cancelPermissionTimeout: (requestId: string) => void;
@@ -130,8 +130,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ settings });
       const { applyTheme } = get();
       applyTheme(settings.theme);
+      return { success: true };
     } catch (error) {
       console.error("Failed to update settings:", error);
+      return { success: false, error: String(error) };
     }
   },
 
