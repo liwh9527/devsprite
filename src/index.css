@@ -326,3 +326,30 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ============================================
+   Section dividers and titles
+   ============================================ */
+
+.section-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 0 12px;
+}
+
+.section-title {
+  font-size: 9px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 12px 2px;
+}
+
+/* ============================================
+   Pin button active state
+   ============================================ */
+
+.pin-active {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
