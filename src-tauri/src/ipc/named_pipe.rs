@@ -99,125 +99,140 @@ impl NamedPipeListener {
 
         log::info!("Named Pipe listener starting on: {}", pipe_name);
 
+        // Pre-create the first pipe instance so a client can connect immediately.
+        let mut next_handle = Self::create_pipe_instance(pcwstr, buffer_size, max_retries)?;
+
         loop {
             unsafe {
-                let handle = {
-                    let mut retries = 0u32;
-                    let mut delay = std::time::Duration::from_secs(1);
-                    let mut pipe_handle;
-
-                    loop {
-                        // DUPLEX mode: supports both fire-and-forget events (client writes only)
-                        // and permission requests (client writes, then reads response).
-                        pipe_handle = CreateNamedPipeW(
-                            pcwstr,
-                            PIPE_ACCESS_DUPLEX,
-                            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-                            255, // PIPE_UNLIMITED_INSTANCES
-                            0,
-                            buffer_size as u32,
-                            0,
-                            None,
-                        );
-
-                        if !pipe_handle.is_invalid() {
-                            break;
-                        }
-
-                        let err = io::Error::last_os_error();
-                        retries += 1;
-
-                        if retries > max_retries {
-                            log::error!(
-                                "Failed to create pipe after {} retries: {}",
-                                max_retries,
-                                err
-                            );
-                            return Err(err);
-                        }
-
-                        log::warn!(
-                            "Pipe creation failed (attempt {}/{}), retrying in {:?}: {}",
-                            retries,
-                            max_retries,
-                            delay,
-                            err
-                        );
-                        std::thread::sleep(delay);
-                        delay = delay.saturating_mul(2);
-                    }
-
-                    pipe_handle
-                };
-
-                log::info!("Pipe created, waiting for connection...");
-
-                if ConnectNamedPipe(handle, None).is_err() {
-                    log::warn!("ConnectNamedPipe failed, disconnecting");
-                    DisconnectNamedPipe(handle).ok();
-                    CloseHandle(handle).ok();
-                    continue;
-                }
-
-                log::info!("Client connected, spawning reader thread...");
+                // Take the current handle and create the next one immediately.
+                // This allows multiple clients to connect concurrently:
+                // the current handle waits for a connection in a spawned thread,
+                // while the next handle is already ready for another client.
+                let handle = next_handle;
+                next_handle = Self::create_pipe_instance(pcwstr, buffer_size, max_retries)?;
 
                 let event_tx_clone = event_tx.clone();
                 let pending_tx_clone = pending_tx.clone();
                 // Convert HANDLE to usize for safe cross-thread transfer (*mut c_void is !Send).
                 // Safety: pipe HANDLEs are kernel objects usable from any thread.
                 let raw = handle.0 as usize;
+
                 std::thread::spawn(move || {
                     let handle = HANDLE(raw as *mut std::ffi::c_void);
-                    let mut buffer = vec![0u8; buffer_size];
-                    let mut bytes_read = 0u32;
+                    log::info!("Pipe created, waiting for connection...");
 
-                    loop {
-                        let success = ReadFile(
-                            handle,
-                            Some(&mut buffer),
-                            Some(&mut bytes_read),
-                            None,
-                        );
+                    if ConnectNamedPipe(handle, None).is_err() {
+                        log::warn!("ConnectNamedPipe failed, disconnecting");
+                        DisconnectNamedPipe(handle).ok();
+                        CloseHandle(handle).ok();
+                        return;
+                    }
 
-                        match success {
-                            Ok(()) if bytes_read == 0 => break,
-                            Ok(()) => {
-                                let msg =
-                                    String::from_utf8_lossy(&buffer[..bytes_read as usize])
-                                        .to_string();
-                                log::info!("Received: {}", &msg[..msg.len().min(100)]);
+                    log::info!("Client connected, spawning reader thread...");
 
-                                // Check if this is a permission_request that needs
-                                // bidirectional pipe communication.
-                                if let Ok(event) =
-                                    serde_json::from_str::<DevSpriteEvent>(&msg)
-                                {
-                                    if event.event == "permission_request" {
-                                        handle_permission_request(
-                                            &event_tx_clone,
-                                            &pending_tx_clone,
-                                            handle,
-                                            &event,
-                                            &msg,
-                                        );
-                                        // Permission request handled; this connection is done.
+                    let event_tx_reader = event_tx_clone.clone();
+                    let pending_tx_reader = pending_tx_clone.clone();
+                    let raw = handle.0 as usize;
+                    std::thread::spawn(move || {
+                        let handle = HANDLE(raw as *mut std::ffi::c_void);
+                        let mut buffer = vec![0u8; buffer_size];
+                        let mut bytes_read = 0u32;
+
+                        loop {
+                            let success = ReadFile(
+                                handle,
+                                Some(&mut buffer),
+                                Some(&mut bytes_read),
+                                None,
+                            );
+
+                            match success {
+                                Ok(()) if bytes_read == 0 => break,
+                                Ok(()) => {
+                                    let msg =
+                                        String::from_utf8_lossy(&buffer[..bytes_read as usize])
+                                            .to_string();
+                                    log::info!("Received: {}", &msg[..msg.len().min(100)]);
+
+                                    if let Ok(event) =
+                                        serde_json::from_str::<DevSpriteEvent>(&msg)
+                                    {
+                                        if event.event == "permission_request" {
+                                            handle_permission_request(
+                                                &event_tx_reader,
+                                                &pending_tx_reader,
+                                                handle,
+                                                &event,
+                                                &msg,
+                                            );
+                                            break;
+                                        }
+                                    }
+
+                                    if event_tx_reader.blocking_send(msg).is_err() {
                                         break;
                                     }
                                 }
-
-                                // Non-permission event: fire-and-forget.
-                                if event_tx_clone.blocking_send(msg).is_err() {
-                                    break;
-                                }
+                                Err(_) => break,
                             }
-                            Err(_) => break,
                         }
-                    }
 
-                    log::info!("Client disconnected");
-                    DisconnectNamedPipe(handle).ok();
-                    CloseHandle(handle).ok();
+                        log::info!("Client disconnected");
+                        DisconnectNamedPipe(handle).ok();
+                        CloseHandle(handle).ok();
+                    });
                 });
+            }
+        }
+    }
+
+    /// Creates a single named pipe instance with retry logic.
+    fn create_pipe_instance(
+        pcwstr: PCWSTR,
+        buffer_size: usize,
+        max_retries: u32,
+    ) -> io::Result<HANDLE> {
+        let mut retries = 0u32;
+        let mut delay = std::time::Duration::from_secs(1);
+
+        loop {
+            unsafe {
+                let handle = CreateNamedPipeW(
+                    pcwstr,
+                    PIPE_ACCESS_DUPLEX,
+                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                    255, // PIPE_UNLIMITED_INSTANCES
+                    0,
+                    buffer_size as u32,
+                    0,
+                    None,
+                );
+
+                if !handle.is_invalid() {
+                    return Ok(handle);
+                }
+
+                let err = io::Error::last_os_error();
+                retries += 1;
+
+                if retries > max_retries {
+                    log::error!(
+                        "Failed to create pipe after {} retries: {}",
+                        max_retries,
+                        err
+                    );
+                    return Err(err);
+                }
+
+                log::warn!(
+                    "Pipe creation failed (attempt {}/{}), retrying in {:?}: {}",
+                    retries,
+                    max_retries,
+                    delay,
+                    err
+                );
+                std::thread::sleep(delay);
+                delay = delay.saturating_mul(2);
             }
         }
     }
