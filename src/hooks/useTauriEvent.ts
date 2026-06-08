@@ -13,6 +13,7 @@ import type {
   PermissionRequestData,
   StatusChangeData,
   UserPromptData,
+  AiResponseData,
   SpriteStatus,
 } from "../types";
 
@@ -92,10 +93,15 @@ export function useTauriEvent() {
           break;
         }
 
-        case "ai_response":
+        case "ai_response": {
+          const aiData = data as unknown as AiResponseData;
           setStatus("active", "AI 已回复");
+          if (aiData?.content) {
+            addChatMessage({ role: "assistant", content: aiData.content, timestamp: Date.now() });
+          }
           if (soundEnabled) playCompleteSound(soundVolume);
           break;
+        }
 
         case "user_prompt": {
           const promptData = data as unknown as UserPromptData;

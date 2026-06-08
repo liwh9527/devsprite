@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { ToolCall } from "../types";
 
 interface ToolListProps {
   toolCalls: ToolCall[];
   maxToolCalls?: number;
+  onClear?: () => void;
 }
 
 const toolIcons: Record<string, string> = {
@@ -32,7 +33,13 @@ function formatTime(timestamp: number): string {
   return `${days}d`;
 }
 
-export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5 }) => {
+export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5, onClear }) => {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (toolCalls.length === 0) {
     return (
       <div className="px-3 py-2">
@@ -45,6 +52,16 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5 
 
   return (
     <div className="px-3 py-1">
+      {onClear && (
+        <div className="flex justify-end mb-0.5">
+          <button
+            onClick={onClear}
+            className="text-[9px] text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            清空
+          </button>
+        </div>
+      )}
       <div className="space-y-0.5">
         {toolCalls.slice(0, maxToolCalls).map((call) => (
           <div

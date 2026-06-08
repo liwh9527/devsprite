@@ -48,8 +48,9 @@ describe("SessionSwitcher", () => {
     render(<SessionSwitcher />);
     const buttons = screen.getAllByRole("button");
     expect(buttons.length).toBe(2);
-    expect(buttons[0].textContent).toContain("aaaa-bbb");
-    expect(buttons[1].textContent).toContain("cccc-ddd");
+    // Session labels are now timestamps, verify they render (format: HH:MM)
+    expect(buttons[0].textContent).toMatch(/\d{1,2}:\d{2}/);
+    expect(buttons[1].textContent).toMatch(/\d{1,2}:\d{2}/);
   });
 
   it("should highlight the active session with blue styling", () => {

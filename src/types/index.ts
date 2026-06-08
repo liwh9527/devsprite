@@ -78,6 +78,10 @@ export interface SubagentData {
   agent_id: string;
 }
 
+export interface AiResponseData {
+  content?: string;
+}
+
 export interface SessionState {
   sessionId: string;
   status: SpriteStatus;

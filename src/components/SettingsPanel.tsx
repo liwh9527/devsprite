@@ -49,6 +49,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     }
   };
 
+  const hasChanges = JSON.stringify(localSettings) !== JSON.stringify(settings);
+
+  const handleClose = () => {
+    if (hasChanges && !window.confirm("有未保存的更改，确定要关闭吗？")) {
+      return;
+    }
+    onClose();
+  };
+
   const handleReset = () => {
     if (!window.confirm("确定要恢复默认设置吗？所有自定义配置将丢失。")) {
       return;
@@ -78,7 +87,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h2 className="font-bold text-sm">设置</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 text-lg leading-none"
           >
             ✕

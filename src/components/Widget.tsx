@@ -22,9 +22,11 @@ export const Widget: React.FC = () => {
   const permissionRequests = useAppStore((s) => getActiveSession(s)?.permissionRequests ?? []);
   const settings = useAppStore((s) => s.settings);
   const loadSettings = useAppStore((s) => s.loadSettings);
+  const isPinned = useAppStore((s) => s.isPinned);
+  const setPinned = useAppStore((s) => s.setPinned);
+  const clearToolCalls = useAppStore((s) => s.clearToolCalls);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
   const currentPermission = permissionRequests[0];
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -56,7 +58,7 @@ export const Widget: React.FC = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-white font-bold text-sm">DevSprite</h1>
             <button
-              onClick={() => setIsPinned(!isPinned)}
+              onClick={() => setPinned(!isPinned)}
               className="text-white/70 hover:text-white text-xs"
               title={isPinned ? "取消锁定" : "锁定面板"}
             >
@@ -69,7 +71,7 @@ export const Widget: React.FC = () => {
 
         <SessionSwitcher />
 
-        <ToolList toolCalls={toolCalls} maxToolCalls={settings.behavior.max_tool_calls} />
+        <ToolList toolCalls={toolCalls} maxToolCalls={settings.behavior.max_tool_calls} onClear={clearToolCalls} />
 
         {chatMessages.length > 0 && (
           <ChatHistory messages={chatMessages} />

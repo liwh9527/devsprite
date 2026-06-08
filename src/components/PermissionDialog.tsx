@@ -11,6 +11,7 @@ interface PermissionDialogProps {
 export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, timeout = 30, queueLength }) => {
   const { respondToPermission } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState(timeout);
 
   useEffect(() => {
@@ -27,8 +28,11 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
 
   const handleApprove = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       await respondToPermission(request.id, true);
+    } catch {
+      setError("操作失败，请重试");
     } finally {
       setIsLoading(false);
     }
@@ -36,8 +40,11 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
 
   const handleReject = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       await respondToPermission(request.id, false);
+    } catch {
+      setError("操作失败，请重试");
     } finally {
       setIsLoading(false);
     }
@@ -79,14 +86,14 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
         <div className="flex gap-1.5">
           <button
             onClick={handleApprove}
-            disabled={isLoading}
+            disabled={isLoading || remaining <= 0}
             className="flex-1 bg-green-500 text-white text-[10px] font-semibold py-1 px-2 rounded hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "处理中..." : "批准"}
           </button>
           <button
             onClick={handleReject}
-            disabled={isLoading}
+            disabled={isLoading || remaining <= 0}
             className="flex-1 bg-white text-red-500 text-[10px] font-semibold py-1 px-2 rounded border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "处理中..." : "拒绝"}
@@ -96,6 +103,9 @@ export const PermissionDialog: React.FC<PermissionDialogProps> = ({ request, tim
           <p className="text-[9px] text-gray-400 text-center mt-1">
             还有 {queueLength - 1} 个待处理
           </p>
+        )}
+        {error && (
+          <p className="text-[9px] text-red-500 text-center mt-1">{error}</p>
         )}
       </div>
     </div>

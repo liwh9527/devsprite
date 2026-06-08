@@ -45,6 +45,8 @@ const findSessionForPermission = (
 
 interface AppStore extends AppState {
   settings: Settings;
+  isPinned: boolean;
+  setPinned: (pinned: boolean) => void;
   ensureSession: (sessionId: string) => void;
   setActiveSession: (sessionId: string) => void;
   setStatus: (status: SpriteStatus, message?: string) => void;
@@ -67,6 +69,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   sessions: new Map(),
   activeSessionId: null,
   pendingResponses: [],
+  isPinned: false,
+  setPinned: (pinned: boolean) => set({ isPinned: pinned }),
   settings: {
     window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
     pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },

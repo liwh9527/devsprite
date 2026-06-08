@@ -6,7 +6,9 @@ export const SessionSwitcher: React.FC = () => {
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const setActiveSession = useAppStore((state) => state.setActiveSession);
 
-  const sessionList = Array.from(sessions.values());
+  const sessionList = Array.from(sessions.values()).sort(
+    (a, b) => b.lastActive - a.lastActive
+  );
 
   // Only show when there are multiple sessions
   if (sessionList.length <= 1) return null;
@@ -24,7 +26,7 @@ export const SessionSwitcher: React.FC = () => {
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
             }`}
           >
-            {session.sessionId.slice(0, 8)}
+            {new Date(session.lastActive).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
             {session.permissionRequests.length > 0 && session.sessionId !== activeSessionId && (
               <span className="ml-1 w-1.5 h-1.5 bg-red-500 rounded-full inline-block" />
             )}

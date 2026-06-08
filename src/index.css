@@ -37,7 +37,6 @@ body::-webkit-scrollbar,
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  user-select: none;
 }
 
 /* Desktop pet layout */
@@ -63,7 +62,8 @@ body {
 .pet-panel {
   order: 0;
   width: var(--panel-width);
-  margin-bottom: 8px;
+  margin-bottom: 0;
+  padding-bottom: 8px;
   background: rgba(255, 255, 255, var(--panel-opacity));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -315,4 +315,14 @@ body {
 @keyframes scale-in {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* Slow pulse animation for status indicator */
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

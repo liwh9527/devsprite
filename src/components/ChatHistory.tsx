@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { ChatMessage } from "../types";
 
 interface ChatHistoryProps {
@@ -18,6 +18,12 @@ function formatTime(timestamp: number): string {
 }
 
 export const ChatHistory: React.FC<ChatHistoryProps> = ({ messages, maxMessages = 5 }) => {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (messages.length === 0) {
     return null;
   }

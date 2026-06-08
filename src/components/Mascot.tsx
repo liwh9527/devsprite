@@ -64,7 +64,7 @@ export const Mascot: React.FC<MascotProps> = ({ status }) => {
         <img
           src={mascotImages[status]}
           alt="DevSprite mascot"
-          className="h-[340px] w-auto"
+          className="h-[200px] w-auto"
           draggable={false}
         />
         {/* Single click: floating hearts */}
