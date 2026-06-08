@@ -15,7 +15,20 @@ $input = $stdin | ConvertFrom-Json
 
 # Map Claude Code hook events to DevSprite events
 $devspriteEvent = "status_change"
-$sessionId = if ($input.session_id) { $input.session_id } else { [guid]::NewGuid().ToString() }
+
+# Session ID: use from stdin if available, otherwise persist one per Claude Code process.
+# Store in a temp file keyed by PID so all events from the same session share one ID.
+$sessionId = $input.session_id
+if (-not $sessionId) {
+    $sessionFile = Join-Path $env:TEMP "devsprite-session-$pid.txt"
+    if (Test-Path $sessionFile) {
+        $sessionId = Get-Content $sessionFile -Raw
+        $sessionId = $sessionId.Trim()
+    } else {
+        $sessionId = [guid]::NewGuid().ToString()
+        $sessionId | Out-File $sessionFile -NoNewline
+    }
+}
 $data = @{}
 $isBlocking = $false
 
@@ -35,7 +48,7 @@ switch ($Event) {
         $data = @{
             tool_name = if ($input.tool_name) { $input.tool_name } else { "" }
             file_path = if ($toolInput.file_path) { $toolInput.file_path } else { "" }
-            status = "running"
+            status = "pending"
             detail = $detail
         }
     }
@@ -69,6 +82,9 @@ switch ($Event) {
     "Stop" {
         $devspriteEvent = "session_end"
         $data = @{}
+        # Clean up session file on session end
+        $sessionFile = Join-Path $env:TEMP "devsprite-session-$pid.txt"
+        if (Test-Path $sessionFile) { Remove-Item $sessionFile -Force }
     }
     "SessionStart" {
         $devspriteEvent = "session_start"
