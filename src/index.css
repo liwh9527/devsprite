@@ -78,8 +78,9 @@ body {
   z-index: 100;
 }
 
-/* Show panel on hover */
-.pet-container:hover .pet-panel {
+/* Show panel on hover or when pinned */
+.pet-container:hover .pet-panel,
+.pet-container.pinned .pet-panel {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
