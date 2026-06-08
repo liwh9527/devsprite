@@ -99,88 +99,76 @@ impl NamedPipeListener {
 
         log::info!("Named Pipe listener starting on: {}", pipe_name);
 
-        // Pre-create the first pipe instance so a client can connect immediately.
-        let mut next_handle = Self::create_pipe_instance(pcwstr, buffer_size, max_retries)?;
-
         loop {
+            // Create a pipe instance and block until a client connects.
+            // This is the simplest correct model: one instance at a time,
+            // no thread accumulation, no memory leak.
+            let handle = Self::create_pipe_instance(pcwstr, buffer_size, max_retries)?;
+
             unsafe {
-                // Take the current handle and create the next one immediately.
-                // This allows multiple clients to connect concurrently:
-                // the current handle waits for a connection in a spawned thread,
-                // while the next handle is already ready for another client.
-                let handle = next_handle;
-                next_handle = Self::create_pipe_instance(pcwstr, buffer_size, max_retries)?;
+                log::info!("Pipe created, waiting for connection...");
+
+                if ConnectNamedPipe(handle, None).is_err() {
+                    log::warn!("ConnectNamedPipe failed, disconnecting");
+                    DisconnectNamedPipe(handle).ok();
+                    CloseHandle(handle).ok();
+                    continue;
+                }
+
+                log::info!("Client connected, spawning reader thread...");
 
                 let event_tx_clone = event_tx.clone();
                 let pending_tx_clone = pending_tx.clone();
                 // Convert HANDLE to usize for safe cross-thread transfer (*mut c_void is !Send).
                 // Safety: pipe HANDLEs are kernel objects usable from any thread.
                 let raw = handle.0 as usize;
-
                 std::thread::spawn(move || {
                     let handle = HANDLE(raw as *mut std::ffi::c_void);
-                    log::info!("Pipe created, waiting for connection...");
+                    let mut buffer = vec![0u8; buffer_size];
+                    let mut bytes_read = 0u32;
 
-                    if ConnectNamedPipe(handle, None).is_err() {
-                        log::warn!("ConnectNamedPipe failed, disconnecting");
-                        DisconnectNamedPipe(handle).ok();
-                        CloseHandle(handle).ok();
-                        return;
-                    }
+                    loop {
+                        let success = ReadFile(
+                            handle,
+                            Some(&mut buffer),
+                            Some(&mut bytes_read),
+                            None,
+                        );
 
-                    log::info!("Client connected, spawning reader thread...");
+                        match success {
+                            Ok(()) if bytes_read == 0 => break,
+                            Ok(()) => {
+                                let msg =
+                                    String::from_utf8_lossy(&buffer[..bytes_read as usize])
+                                        .to_string();
+                                log::info!("Received: {}", &msg[..msg.len().min(100)]);
 
-                    let event_tx_reader = event_tx_clone.clone();
-                    let pending_tx_reader = pending_tx_clone.clone();
-                    let raw = handle.0 as usize;
-                    std::thread::spawn(move || {
-                        let handle = HANDLE(raw as *mut std::ffi::c_void);
-                        let mut buffer = vec![0u8; buffer_size];
-                        let mut bytes_read = 0u32;
-
-                        loop {
-                            let success = ReadFile(
-                                handle,
-                                Some(&mut buffer),
-                                Some(&mut bytes_read),
-                                None,
-                            );
-
-                            match success {
-                                Ok(()) if bytes_read == 0 => break,
-                                Ok(()) => {
-                                    let msg =
-                                        String::from_utf8_lossy(&buffer[..bytes_read as usize])
-                                            .to_string();
-                                    log::info!("Received: {}", &msg[..msg.len().min(100)]);
-
-                                    if let Ok(event) =
-                                        serde_json::from_str::<DevSpriteEvent>(&msg)
-                                    {
-                                        if event.event == "permission_request" {
-                                            handle_permission_request(
-                                                &event_tx_reader,
-                                                &pending_tx_reader,
-                                                handle,
-                                                &event,
-                                                &msg,
-                                            );
-                                            break;
-                                        }
-                                    }
-
-                                    if event_tx_reader.blocking_send(msg).is_err() {
+                                if let Ok(event) =
+                                    serde_json::from_str::<DevSpriteEvent>(&msg)
+                                {
+                                    if event.event == "permission_request" {
+                                        handle_permission_request(
+                                            &event_tx_clone,
+                                            &pending_tx_clone,
+                                            handle,
+                                            &event,
+                                            &msg,
+                                        );
                                         break;
                                     }
                                 }
-                                Err(_) => break,
-                            }
-                        }
 
-                        log::info!("Client disconnected");
-                        DisconnectNamedPipe(handle).ok();
-                        CloseHandle(handle).ok();
-                    });
+                                if event_tx_clone.blocking_send(msg).is_err() {
+                                    break;
+                                }
+                            }
+                            Err(_) => break,
+                        }
+                    }
+
+                    log::info!("Client disconnected");
+                    DisconnectNamedPipe(handle).ok();
+                    CloseHandle(handle).ok();
                 });
             }
         }
