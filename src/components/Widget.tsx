@@ -60,7 +60,7 @@ export const Widget: React.FC = () => {
             <h1 className="text-white font-bold text-sm">DevSprite</h1>
             <button
               onClick={() => setPinned(!isPinned)}
-              className="text-white/70 hover:text-white text-xs"
+              className={`text-xs transition-colors ${isPinned ? 'text-white pin-active' : 'text-white/70 hover:text-white'}`}
               title={isPinned ? "取消锁定" : "锁定面板"}
             >
               {isPinned ? "📌" : "📍"}
@@ -70,28 +70,47 @@ export const Widget: React.FC = () => {
 
         <StatusCard status={status} message={statusMessage} connectionStatus={connectionStatus} />
 
+        <div className="section-divider" />
+
         <SessionSwitcher />
+
+        {/* 在 ToolList 之前添加标题 */}
+        <div className="section-title">工具调用</div>
 
         <ToolList toolCalls={toolCalls} maxToolCalls={settings.behavior.max_tool_calls} onClear={clearToolCalls} />
 
+        {/* 在 ChatHistory 之前添加标题 */}
         {chatMessages.length > 0 && (
-          <ChatHistory messages={chatMessages} />
+          <>
+            <div className="section-divider" />
+            <div className="section-title">对话</div>
+            <ChatHistory messages={chatMessages} />
+          </>
         )}
 
+        {/* 在 PermissionDialog 之前添加分隔线 */}
         {currentPermission && (
-          <PermissionDialog
-            request={currentPermission}
-            timeout={settings.behavior.permission_timeout}
-            queueLength={permissionRequests.length}
-          />
+          <>
+            <div className="section-divider" />
+            <PermissionDialog
+              request={currentPermission}
+              timeout={settings.behavior.permission_timeout}
+              queueLength={permissionRequests.length}
+            />
+          </>
         )}
 
+        {/* 设置按钮改为带图标的样式 */}
         <div className="px-3 py-2 border-t border-gray-100">
           <button
             onClick={handleSettingsClick}
-            className="w-full text-xs text-gray-400 hover:text-gray-600 py-1"
+            className="w-full text-[10px] text-gray-400 hover:text-gray-600 py-1.5 flex items-center justify-center gap-1 transition-colors"
           >
-            ⚙ 设置
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            设置
           </button>
         </div>
       </div>
