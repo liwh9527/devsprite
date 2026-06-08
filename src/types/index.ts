@@ -1,4 +1,5 @@
 export type SpriteStatus = "idle" | "active" | "working" | "waiting" | "error";
+export type ConnectionStatus = "connected" | "disconnected" | "unknown";
 
 export interface ChatMessage {
   role: "user" | "assistant";

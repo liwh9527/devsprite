@@ -4,6 +4,7 @@ import type {
   AppState,
   SessionState,
   SpriteStatus,
+  ConnectionStatus,
   ToolCall,
   PermissionRequest,
   PermissionResponse,
@@ -47,10 +48,13 @@ interface AppStore extends AppState {
   settings: Settings;
   isPinned: boolean;
   setPinned: (pinned: boolean) => void;
+  connectionStatus: ConnectionStatus;
+  setConnectionStatus: (status: ConnectionStatus) => void;
   ensureSession: (sessionId: string) => void;
   setActiveSession: (sessionId: string) => void;
   setStatus: (status: SpriteStatus, message?: string) => void;
   addToolCall: (toolCall: ToolCall) => void;
+  updateToolCall: (id: string, updates: Partial<ToolCall>) => void;
   removeToolCall: (id: string) => void;
   clearToolCalls: () => void;
   addPermissionRequest: (request: PermissionRequest) => void;
@@ -71,6 +75,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   pendingResponses: [],
   isPinned: false,
   setPinned: (pinned: boolean) => set({ isPinned: pinned }),
+  connectionStatus: "unknown",
+  setConnectionStatus: (status: ConnectionStatus) => set({ connectionStatus: status }),
   settings: {
     window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
     pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
@@ -123,6 +129,21 @@ export const useAppStore = create<AppStore>((set, get) => ({
           toolCalls: [toolCall, ...session.toolCalls].slice(0, state.settings.behavior.max_tool_calls),
           lastActive: Date.now(),
         });
+      }
+      return { sessions };
+    }),
+
+  updateToolCall: (id, updates) =>
+    set((state) => {
+      const sessions = new Map(state.sessions);
+      for (const [sid, session] of sessions) {
+        const idx = session.toolCalls.findIndex((tc) => tc.id === id);
+        if (idx !== -1) {
+          const updated = [...session.toolCalls];
+          updated[idx] = { ...updated[idx], ...updates };
+          sessions.set(sid, { ...session, toolCalls: updated });
+          break;
+        }
       }
       return { sessions };
     }),

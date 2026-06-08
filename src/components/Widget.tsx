@@ -25,6 +25,7 @@ export const Widget: React.FC = () => {
   const isPinned = useAppStore((s) => s.isPinned);
   const setPinned = useAppStore((s) => s.setPinned);
   const clearToolCalls = useAppStore((s) => s.clearToolCalls);
+  const connectionStatus = useAppStore((s) => s.connectionStatus);
 
   const [showSettings, setShowSettings] = useState(false);
   const currentPermission = permissionRequests[0];
@@ -67,7 +68,7 @@ export const Widget: React.FC = () => {
           </div>
         </div>
 
-        <StatusCard status={status} message={statusMessage} />
+        <StatusCard status={status} message={statusMessage} connectionStatus={connectionStatus} />
 
         <SessionSwitcher />
 

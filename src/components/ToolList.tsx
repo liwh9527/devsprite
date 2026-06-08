@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { ToolCall } from "../types";
+import { formatTime } from "../utils/formatTime";
 
 interface ToolListProps {
   toolCalls: ToolCall[];
@@ -21,17 +22,6 @@ const statusColors: Record<string, string> = {
   completed: "text-green-500",
   failed: "text-red-500",
 };
-
-function formatTime(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `${days}d`;
-}
 
 export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5, onClear }) => {
   const [, setTick] = useState(0);
@@ -72,6 +62,9 @@ export const ToolList: React.FC<ToolListProps> = ({ toolCalls, maxToolCalls = 5,
               <span className={`text-xs shrink-0 ${statusColors[call.status] || ""}`}>
                 {toolIcons[call.toolName] || "🔧"}
               </span>
+              {call.status === "pending" && (
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse shrink-0" />
+              )}
               <span className="text-xs font-medium text-gray-800 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                 {call.toolName}
               </span>

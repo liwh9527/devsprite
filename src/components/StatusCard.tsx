@@ -1,9 +1,10 @@
 import React from "react";
-import type { SpriteStatus } from "../types";
+import type { SpriteStatus, ConnectionStatus } from "../types";
 
 interface StatusCardProps {
   status: SpriteStatus;
   message: string;
+  connectionStatus?: ConnectionStatus;
 }
 
 const statusConfig: Record<
@@ -17,7 +18,7 @@ const statusConfig: Record<
   error: { color: "bg-red-500", label: "错误", icon: "😵" },
 };
 
-export const StatusCard: React.FC<StatusCardProps> = ({ status, message }) => {
+export const StatusCard: React.FC<StatusCardProps> = ({ status, message, connectionStatus = "unknown" }) => {
   const config = statusConfig[status];
 
   return (
@@ -29,6 +30,11 @@ export const StatusCard: React.FC<StatusCardProps> = ({ status, message }) => {
         <span className="font-medium text-gray-800 text-xs">
           {config.label}{status !== "idle" && "..."}
         </span>
+        {connectionStatus === "disconnected" && (
+          <span className="text-[9px] text-red-400 ml-auto" title="Claude Code 连接已断开">
+            ⚠ 断开
+          </span>
+        )}
       </div>
       {message && (
         <p className="text-[10px] text-gray-500 mt-1 ml-4 truncate" title={message}>

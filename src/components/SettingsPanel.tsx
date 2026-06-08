@@ -11,6 +11,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState(false);
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -75,6 +76,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
       behavior: { max_tool_calls: 5, permission_timeout: 30, hotkey: "Ctrl+Shift+D", sound_enabled: true, sound_volume: 80, auto_launch: false },
     };
     setLocalSettings(defaults);
+    setResetMessage(true);
+    setTimeout(() => setResetMessage(false), 2000);
   };
 
   return (
@@ -287,6 +290,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
         {/* Footer */}
         {error && (
           <p className="text-[10px] text-red-500 px-4 pb-2">{error}</p>
+        )}
+        {resetMessage && (
+          <p className="text-[10px] text-green-500 px-4 pb-2">已恢复默认设置</p>
         )}
         <div className="flex items-center justify-end gap-2 px-4 py-3">
           <button
