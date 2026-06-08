@@ -60,6 +60,7 @@ interface AppStore extends AppState {
   applyTheme: (theme: ThemeSettings) => void;
   startPermissionTimeout: (requestId: string) => void;
   cancelPermissionTimeout: (requestId: string) => void;
+  clearAllPermissionTimeouts: () => void;
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -300,6 +301,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
       clearTimeout(timer);
       permissionTimers.delete(requestId);
     }
+  },
+
+  clearAllPermissionTimeouts: () => {
+    for (const [id, timer] of permissionTimers) {
+      clearTimeout(timer);
+    }
+    permissionTimers.clear();
   },
 
 }));

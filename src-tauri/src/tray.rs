@@ -72,7 +72,7 @@ pub fn update_tray_status(status: &str) -> tauri::Result<()> {
     let status_label = get_status_label(status);
     let item = STATUS_ITEM.get()
         .ok_or_else(|| tauri::Error::from(std::io::Error::new(std::io::ErrorKind::Other, "Tray not initialized")))?;
-    item.set_text(format!("状态: {}", status_label));
+    let _ = item.set_text(format!("状态: {}", status_label));
     log::info!("Tray status updated: {}", status_label);
     Ok(())
 }
