@@ -31,7 +31,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ status, message }) => {
         </span>
       </div>
       {message && (
-        <p className="text-[10px] text-gray-500 mt-1 ml-4 truncate">
+        <p className="text-[10px] text-gray-500 mt-1 ml-4 truncate" title={message}>
           {message}
         </p>
       )}
