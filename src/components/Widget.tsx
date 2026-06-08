@@ -68,7 +68,10 @@ export const Widget: React.FC = () => {
         <ToolList toolCalls={toolCalls} />
 
         {currentPermission && (
-          <PermissionDialog request={currentPermission} />
+          <PermissionDialog
+            request={currentPermission}
+            queueLength={permissionRequests.length}
+          />
         )}
 
         <div className="px-3 py-2 border-t border-gray-100">
