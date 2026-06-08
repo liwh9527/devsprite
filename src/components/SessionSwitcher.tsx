@@ -16,19 +16,22 @@ export const SessionSwitcher: React.FC = () => {
   return (
     <div className="px-3 py-1 border-b border-gray-100">
       <div className="flex gap-1 overflow-x-auto">
-        {sessionList.map((session) => (
+        {sessionList.map((session, idx) => (
           <button
             key={session.sessionId}
             onClick={() => setActiveSession(session.sessionId)}
-            className={`text-[9px] px-2 py-0.5 rounded-full transition-colors ${
+            className={`text-[9px] px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 ${
               session.sessionId === activeSessionId
                 ? "bg-blue-100 text-blue-700"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
             }`}
           >
-            {new Date(session.lastActive).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+            <span>S{idx + 1}</span>
+            <span className="opacity-60">
+              {new Date(session.lastActive).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+            </span>
             {session.permissionRequests.length > 0 && session.sessionId !== activeSessionId && (
-              <span className="ml-1 w-1.5 h-1.5 bg-red-500 rounded-full inline-block" />
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
             )}
           </button>
         ))}
