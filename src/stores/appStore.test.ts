@@ -170,8 +170,8 @@ describe("useAppStore", () => {
       approved: true,
     });
     expect(useAppStore.getState().sessions.get("sess1")!.permissionRequests).toHaveLength(0);
-    expect(useAppStore.getState().pendingResponses).toHaveLength(1);
-    expect(useAppStore.getState().pendingResponses[0].approved).toBe(true);
+    // pendingResponses is cleaned up after successful processing
+    expect(useAppStore.getState().pendingResponses).toHaveLength(0);
   });
 
   it("should respond to permission with rejection", async () => {
@@ -190,7 +190,8 @@ describe("useAppStore", () => {
       sessionId: "sess1",
       approved: false,
     });
-    expect(useAppStore.getState().pendingResponses[0].approved).toBe(false);
+    // pendingResponses is cleaned up after successful processing
+    expect(useAppStore.getState().pendingResponses).toHaveLength(0);
   });
 
   it("should keep request on invoke failure", async () => {

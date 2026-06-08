@@ -227,6 +227,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
         };
       });
 
+      // Clean up pending response after successful processing
+      set((state) => ({
+        pendingResponses: state.pendingResponses.filter((r) => r.requestId !== requestId),
+      }));
+
       console.log(`Permission response sent: ${requestId} -> ${approved}`);
     } catch (error) {
       console.error("Failed to send permission response:", error);

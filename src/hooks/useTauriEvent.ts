@@ -25,6 +25,7 @@ export function useTauriEvent() {
     addPermissionRequest,
     startPermissionTimeout,
     addChatMessage,
+    clearAllPermissionTimeouts,
     loadSettings,
   } = useAppStore();
 
@@ -118,9 +119,10 @@ export function useTauriEvent() {
     });
 
     return () => {
+      clearAllPermissionTimeouts();
       unlisten.then((fn) => fn());
     };
-  }, [ensureSession, setActiveSession, setStatus, addToolCall, addPermissionRequest, startPermissionTimeout, addChatMessage]);
+  }, [ensureSession, setActiveSession, setStatus, addToolCall, addPermissionRequest, startPermissionTimeout, addChatMessage, clearAllPermissionTimeouts]);
 
   useEffect(() => {
     const unlisten = listen<null>("settings-changed", () => {
