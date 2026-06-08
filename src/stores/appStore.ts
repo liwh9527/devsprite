@@ -6,6 +6,7 @@ import type {
   ToolCall,
   PermissionRequest,
   PermissionResponse,
+  SessionState,
   Settings,
   ThemeSettings,
 } from "../types";
@@ -23,7 +24,7 @@ interface AppStore extends AppState {
   removePermissionRequest: (id: string) => void;
   respondToPermission: (requestId: string, approved: boolean) => Promise<void>;
   setWidgetVisible: (visible: boolean) => void;
-  toggleWidget: () => void;
+  setActiveSession: (sessionId: string) => void;
   loadSettings: () => Promise<void>;
   updateSettings: (settings: Settings) => Promise<void>;
   applyTheme: (theme: ThemeSettings) => void;
@@ -40,6 +41,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   permissionRequests: [],
   isWidgetVisible: true,
   pendingResponses: [],
+  sessions: new Map(),
+  activeSessionId: null,
   settings: {
     window: { x: 100, y: 100, visible: true, width: 220, height: 580 },
     pipe: { name: "devsprite", buffer_size: 4096, connect_timeout: 3000, max_retries: 3 },
@@ -56,7 +59,44 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setStatus: (status, message = "") =>
     set({ status, statusMessage: message }),
 
-  setSessionId: (sessionId) => set({ sessionId }),
+  setSessionId: (sessionId) =>
+    set((state) => {
+      if (!sessionId) return { sessionId };
+      const sessions = new Map(state.sessions);
+      if (!sessions.has(sessionId)) {
+        sessions.set(sessionId, {
+          sessionId,
+          status: "idle",
+          statusMessage: "",
+          toolCalls: [],
+          permissionRequests: [],
+          lastActive: Date.now(),
+        });
+      } else {
+        const session = sessions.get(sessionId)!;
+        sessions.set(sessionId, { ...session, lastActive: Date.now() });
+      }
+      return { sessionId, sessions, activeSessionId: sessionId };
+    }),
+
+  setActiveSession: (sessionId: string) =>
+    set((state) => {
+      const sessions = new Map(state.sessions);
+      if (!sessions.has(sessionId)) {
+        sessions.set(sessionId, {
+          sessionId,
+          status: "idle",
+          statusMessage: "",
+          toolCalls: [],
+          permissionRequests: [],
+          lastActive: Date.now(),
+        });
+      } else {
+        const session = sessions.get(sessionId)!;
+        sessions.set(sessionId, { ...session, lastActive: Date.now() });
+      }
+      return { sessions, activeSessionId: sessionId };
+    }),
 
   addToolCall: (toolCall) =>
     set((state) => ({
@@ -102,16 +142,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
         pendingResponses: [...state.pendingResponses, response],
       }));
 
+      // Clean up pending response after successful processing
+      set((state) => ({
+        pendingResponses: state.pendingResponses.filter((r) => r.requestId !== requestId),
+      }));
+
       console.log(`Permission response sent: ${requestId} -> ${approved}`);
     } catch (error) {
       console.error("Failed to send permission response:", error);
     }
   },
 
-  setWidgetVisible: (isWidgetVisible) => set({ isWidgetVisible }),
-
-  toggleWidget: () =>
-    set((state) => ({ isWidgetVisible: !state.isWidgetVisible })),
+  setWidgetVisible: (visible) => set({ isWidgetVisible: visible }),
 
   loadSettings: async () => {
     try {
@@ -152,6 +194,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const timer = setTimeout(() => {
       get().respondToPermission(requestId, false);
       permissionTimers.delete(requestId);
+      set({ statusMessage: "权限请求已超时自动拒绝" });
       console.log(`Permission request ${requestId} auto-denied after ${timeout}ms`);
     }, timeout);
 

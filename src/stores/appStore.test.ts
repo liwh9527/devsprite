@@ -124,8 +124,8 @@ describe("useAppStore", () => {
       approved: true,
     });
     expect(useAppStore.getState().permissionRequests).toHaveLength(0);
-    expect(useAppStore.getState().pendingResponses).toHaveLength(1);
-    expect(useAppStore.getState().pendingResponses[0].approved).toBe(true);
+    // pendingResponses is cleaned up after successful processing
+    expect(useAppStore.getState().pendingResponses).toHaveLength(0);
   });
 
   it("should respond to permission with rejection", async () => {
@@ -145,7 +145,8 @@ describe("useAppStore", () => {
       requestId: "p2",
       approved: false,
     });
-    expect(useAppStore.getState().pendingResponses[0].approved).toBe(false);
+    // pendingResponses is cleaned up after successful processing
+    expect(useAppStore.getState().pendingResponses).toHaveLength(0);
   });
 
   it("should keep request on invoke failure", async () => {
@@ -165,14 +166,6 @@ describe("useAppStore", () => {
     expect(useAppStore.getState().permissionRequests).toHaveLength(1);
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
-  });
-
-  it("should toggle widget visibility", () => {
-    expect(useAppStore.getState().isWidgetVisible).toBe(true);
-    useAppStore.getState().toggleWidget();
-    expect(useAppStore.getState().isWidgetVisible).toBe(false);
-    useAppStore.getState().toggleWidget();
-    expect(useAppStore.getState().isWidgetVisible).toBe(true);
   });
 
   it("should load settings", async () => {

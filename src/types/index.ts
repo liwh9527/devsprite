@@ -53,6 +53,15 @@ export interface StatusChangeData {
   message: string;
 }
 
+export interface SessionState {
+  sessionId: string;
+  status: SpriteStatus;
+  statusMessage: string;
+  toolCalls: ToolCall[];
+  permissionRequests: PermissionRequest[];
+  lastActive: number;
+}
+
 export interface AppState {
   status: SpriteStatus;
   statusMessage: string;
@@ -61,6 +70,8 @@ export interface AppState {
   permissionRequests: PermissionRequest[];
   isWidgetVisible: boolean;
   pendingResponses: PermissionResponse[];
+  sessions: Map<string, SessionState>;
+  activeSessionId: string | null;
 }
 
 export interface WindowSettings {
